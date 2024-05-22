@@ -120,18 +120,39 @@ void ATDSCharacter::MovementTick(float DeltaTime)
 	if (MyController)
 	{
 		FHitResult HitResult;
-		//MyController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_GameTraceChannel1), false, HitResult);
-		MyController->GetHitResultUnderCursorByChannel(ETraceTypeQuery::TraceTypeQuery3, false, HitResult);
-		SetActorRotation(
-			FRotator(0.0f, UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), HitResult.Location).Yaw, 0.0f));
-		//UE_LOG(LogTemp, Error, TEXT("HitResult.Distance: %d"), HitResult.Distance);
+		MyController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_GameTraceChannel1), false,
+		                                               HitResult);
+		if (HitResult.bBlockingHit)
+		{
+			//rotated by cursor captured by channel
+			FRotator PlayerRot = FRotator(
+				0.0f,
+				UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), HitResult.Location).Yaw,
+				0.0f);
+			SetActorRotation(PlayerRot);
+		}
+		else
+		{
+			//rotated by cursor screen position
+			FVector WorldLocation;
+			FVector WorldDirection;
+			MyController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
+			FVector End = FVector(WorldLocation + WorldDirection);
+
+			FRotator PlayerRot = FRotator(
+				0.0f,
+				UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), End).Yaw,
+				0.0f);
+			SetActorRotation(PlayerRot);
+		}
 	}
 }
 
 void ATDSCharacter::CharacterUpdate()
 {
 	float ResSpeed = 600.0f;
-	switch (MovementState) {
+	switch (MovementState)
+	{
 	case EMovementState::Aim_State:
 		ResSpeed = MovementInfo.AimSpeed;
 		break;
