@@ -41,17 +41,16 @@ private:
 	class UDecalComponent* CursorToWorld;
 
 public:
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
 	EMovementState MovementState = EMovementState::Run_State;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
 	FCharacterSpeed MovementInfo;
 
-	
+
 	UFUNCTION()
 	void InputAxisX(float Value);
-	
+
 	UFUNCTION()
 	void InputAxisY(float Value);
 
@@ -66,4 +65,21 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ChangeMovementState(EMovementState NewMovementState);
+
+	UFUNCTION()
+	void CameraZoomInput(float Value);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
+	float CameraSensitivity = -300.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
+	float CameraMinHeight = 800.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
+	float CameraMaxHeight = 1500.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
+	float CameraZoomDistance = 0.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
+	float CameraSmoothSpeed = 10.0f;
+
+	UFUNCTION()
+	void SoothingCameraZoom(float DeltaTime);
 };
