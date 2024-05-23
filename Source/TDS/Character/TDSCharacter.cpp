@@ -146,8 +146,8 @@ void ATDSCharacter::MovementTick()
 			//rotated by cursor screen position
 			FVector WorldLocation;
 			FVector WorldDirection;
-			FVector MousePosition = FVector(WorldLocation + WorldDirection * 500);
 			MyController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
+			FVector MousePosition = FVector(WorldLocation + WorldDirection * 500);
 			SetActorRotation(FRotator(
 				0.0f,
 				UKismetMathLibrary::FindLookAtRotation(
