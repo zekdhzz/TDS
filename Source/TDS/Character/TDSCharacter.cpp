@@ -136,26 +136,23 @@ void ATDSCharacter::MovementTick()
 		if (HitResult.bBlockingHit)
 		{
 			//rotated by cursor captured by channel
-			auto rot = FRotator(
+			SetActorRotation(FRotator(
 				0.0f,
 				UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), HitResult.Location).Yaw,
-				0.0f);
-			SetActorRotation(rot);
+				0.0f));
 		}
 		else
 		{
 			//rotated by cursor screen position
 			FVector WorldLocation;
 			FVector WorldDirection;
-			MyController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
 			FVector MousePosition = FVector(WorldLocation + WorldDirection * 500);
-			auto rot = FRotator(
+			MyController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
+			SetActorRotation(FRotator(
 				0.0f,
-				UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),
-				                                       FVector(MousePosition.X, MousePosition.Y, GetActorLocation().Z)).
-				Yaw,
-				0.0f);
-			SetActorRotation(rot);
+				UKismetMathLibrary::FindLookAtRotation(
+					GetActorLocation(), FVector(MousePosition.X, MousePosition.Y, GetActorLocation().Z)).Yaw,
+				0.0f));
 		}
 	}
 }
