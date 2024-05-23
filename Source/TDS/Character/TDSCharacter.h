@@ -47,7 +47,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
 	FCharacterSpeed MovementInfo;
 
-
+	float CharacterMaxMovementSpeed = 600.0f;
+	
 	UFUNCTION()
 	void InputAxisX(float Value);
 
@@ -58,7 +59,7 @@ public:
 	float AxisY = 0.0f;
 
 	UFUNCTION()
-	void MovementTick(float DeltaTime);
+	void MovementTick();
 
 	UFUNCTION(BlueprintCallable)
 	void CharacterUpdate();
@@ -66,7 +67,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ChangeMovementState(EMovementState NewMovementState);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void CameraZoomInput(float Value);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
@@ -81,5 +82,15 @@ public:
 	float CameraSmoothSpeed = 10.0f;
 
 	UFUNCTION()
-	void SoothingCameraZoom(float DeltaTime);
+	void SoothingCameraZoom(float DeltaTime) const;
+
+	UFUNCTION(BlueprintCallable)
+	void CharacterAim();
+	
+	UFUNCTION(BlueprintCallable)
+	void CharacterWalk();
+
+	UFUNCTION(BlueprintCallable)
+	void CharacterRun();
+
 };

@@ -1,6 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "TDSCharacter.h"
+
+#include <string>
+
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/DecalComponent.h"
@@ -64,6 +67,9 @@ void ATDSCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	MovementTick();
+	SoothingCameraZoom(DeltaSeconds);
+
 	if (CursorToWorld != nullptr)
 	{
 		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
@@ -90,17 +96,20 @@ void ATDSCharacter::Tick(float DeltaSeconds)
 			CursorToWorld->SetWorldRotation(CursorR);
 		}
 	}
-	MovementTick(DeltaSeconds);
-	SoothingCameraZoom(DeltaSeconds);
 }
 
 void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &ATDSCharacter::InputAxisX);
-	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &ATDSCharacter::InputAxisY);
-	PlayerInputComponent->BindAxis(TEXT("MouseWheel"), this, &ATDSCharacter::CameraZoomInput);
+	PlayerInputComponent->BindAxis("MoveForward", this, &ATDSCharacter::InputAxisX);
+	PlayerInputComponent->BindAxis("MoveRight", this, &ATDSCharacter::InputAxisY);
+	PlayerInputComponent->BindAxis("MouseWheel", this, &ATDSCharacter::CameraZoomInput);
+	PlayerInputComponent->BindAction("Walk", IE_Pressed, this, &ATDSCharacter::CharacterWalk);
+	PlayerInputComponent->BindAction("Walk", IE_Released, this, &ATDSCharacter::CharacterRun);
+	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &ATDSCharacter::CharacterRun);
+	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ATDSCharacter::CharacterAim);
+	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ATDSCharacter::CharacterRun);
 }
 
 void ATDSCharacter::InputAxisX(const float Value)
@@ -113,7 +122,7 @@ void ATDSCharacter::InputAxisY(const float Value)
 	AxisY = Value;
 }
 
-void ATDSCharacter::MovementTick(float DeltaTime)
+void ATDSCharacter::MovementTick()
 {
 	AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
 	AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
@@ -127,10 +136,11 @@ void ATDSCharacter::MovementTick(float DeltaTime)
 		if (HitResult.bBlockingHit)
 		{
 			//rotated by cursor captured by channel
-			SetActorRotation(FRotator(
+			auto rot = FRotator(
 				0.0f,
 				UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), HitResult.Location).Yaw,
-				0.0f));
+				0.0f);
+			SetActorRotation(rot);
 		}
 		else
 		{
@@ -138,30 +148,33 @@ void ATDSCharacter::MovementTick(float DeltaTime)
 			FVector WorldLocation;
 			FVector WorldDirection;
 			MyController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
-			SetActorRotation(FRotator(
+			FVector MousePosition = FVector(WorldLocation + WorldDirection * 500);
+			auto rot = FRotator(
 				0.0f,
-				UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), FVector(WorldLocation + WorldDirection)).Yaw,
-				0.0f));
+				UKismetMathLibrary::FindLookAtRotation(GetActorLocation(),
+				                                       FVector(MousePosition.X, MousePosition.Y, GetActorLocation().Z)).
+				Yaw,
+				0.0f);
+			SetActorRotation(rot);
 		}
 	}
 }
 
 void ATDSCharacter::CharacterUpdate()
 {
-	float ResSpeed = 600.0f;
 	switch (MovementState)
 	{
 	case EMovementState::Aim_State:
-		ResSpeed = MovementInfo.AimSpeed;
+		CharacterMaxMovementSpeed = MovementInfo.AimSpeed;
 		break;
 	case EMovementState::Walk_State:
-		ResSpeed = MovementInfo.WalkSpeed;
+		CharacterMaxMovementSpeed = MovementInfo.WalkSpeed;
 		break;
 	case EMovementState::Run_State:
-		ResSpeed = MovementInfo.RunSpeed;
+		CharacterMaxMovementSpeed = MovementInfo.RunSpeed;
 		break;
 	}
-	GetCharacterMovement()->MaxWalkSpeed = ResSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = CharacterMaxMovementSpeed;
 }
 
 void ATDSCharacter::ChangeMovementState(const EMovementState NewMovementState)
@@ -181,11 +194,26 @@ void ATDSCharacter::CameraZoomInput(const float Value)
 	}
 }
 
-void ATDSCharacter::SoothingCameraZoom(const float DeltaTime)
+void ATDSCharacter::SoothingCameraZoom(const float DeltaTime) const
 {
 	if (CameraZoomDistance)
 	{
 		GetCameraBoom()->TargetArmLength = UKismetMathLibrary::FInterpTo(
 			GetCameraBoom()->TargetArmLength, CameraZoomDistance, DeltaTime, CameraSmoothSpeed);
 	}
+}
+
+void ATDSCharacter::CharacterAim()
+{
+	ChangeMovementState(EMovementState::Aim_State);
+}
+
+void ATDSCharacter::CharacterWalk()
+{
+	ChangeMovementState(EMovementState::Walk_State);
+}
+
+void ATDSCharacter::CharacterRun()
+{
+	ChangeMovementState(EMovementState::Run_State);
 }
