@@ -70,8 +70,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CameraZoomInput(float Value);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
-	float CameraSensitivity = -300.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
 	float CameraMinHeight = 800.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
@@ -79,10 +78,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
 	float CameraZoomDistance = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
-	float CameraSmoothSpeed = 10.0f;
-
+	float CameraZoomSmoothness = 7.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
+	float CameraSensitivity = 125.0f;
+	
 	UFUNCTION()
-	void SoothingCameraZoom(float DeltaTime) const;
+	void SoothingCameraZoom();
+	
+	FTimerHandle CameraSmoothTimerHandle;
 
 	UFUNCTION(BlueprintCallable)
 	void CharacterAim();

@@ -37,7 +37,7 @@ ATDSCharacter::ATDSCharacter()
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->SetUsingAbsoluteRotation(true); // Don't want arm to rotate when character does
-	CameraBoom->TargetArmLength = 800.f;
+	CameraBoom->TargetArmLength = 1000.f;
 	CameraBoom->SetRelativeRotation(FRotator(-60.f, 0.f, 0.f));
 	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
 
@@ -61,14 +61,13 @@ ATDSCharacter::ATDSCharacter()
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	CameraZoomDistance = CameraBoom->TargetArmLength;
 }
 
 void ATDSCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
-	MovementTick();
-	SoothingCameraZoom(DeltaSeconds);
 
 	if (CursorToWorld != nullptr)
 	{
@@ -96,6 +95,7 @@ void ATDSCharacter::Tick(float DeltaSeconds)
 			CursorToWorld->SetWorldRotation(CursorR);
 		}
 	}
+	MovementTick();
 }
 
 void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -184,19 +184,28 @@ void ATDSCharacter::CameraZoomInput(const float Value)
 {
 	if (Value)
 	{
-		CameraZoomDistance = UKismetMathLibrary::Clamp(
-			Value * CameraSensitivity + GetCameraBoom()->TargetArmLength,
-			CameraMinHeight,
+		CameraZoomDistance = FMath::Min<float>(
+			FMath::Max<float>(CameraBoom->TargetArmLength + CameraSensitivity * Value, CameraMinHeight),
 			CameraMaxHeight);
+		if (!CameraSmoothTimerHandle.IsValid() && !FMath::IsNearlyEqual(CameraBoom->TargetArmLength, CameraZoomDistance,
+		                                                                0.5f))
+		{
+			GetWorldTimerManager().SetTimer(CameraSmoothTimerHandle, this, &ATDSCharacter::SoothingCameraZoom,
+			                                GetWorld()->GetDeltaSeconds(), true, 0.0f);
+		}
 	}
 }
 
-void ATDSCharacter::SoothingCameraZoom(const float DeltaTime) const
+void ATDSCharacter::SoothingCameraZoom()
 {
-	if (CameraZoomDistance)
+	if (!FMath::IsNearlyEqual(CameraBoom->TargetArmLength, CameraZoomDistance, 0.5f))
 	{
-		GetCameraBoom()->TargetArmLength = UKismetMathLibrary::FInterpTo(
-			GetCameraBoom()->TargetArmLength, CameraZoomDistance, DeltaTime, CameraSmoothSpeed);
+		CameraBoom->TargetArmLength = FMath::FInterpTo(CameraBoom->TargetArmLength, CameraZoomDistance,
+		                                               GetWorld()->GetDeltaSeconds(), CameraZoomSmoothness);
+	}
+	else
+	{
+		GetWorldTimerManager().ClearTimer(CameraSmoothTimerHandle);
 	}
 }
 
