@@ -56,28 +56,28 @@ public:
 	UFUNCTION()
 	void SoothingCameraZoom();
 	FTimerHandle CameraSmoothTimerHandle;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
 	EMovementState MovementState = EMovementState::Run_State;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
 	FCharacterSpeed MovementInfo;
 	float AxisX = 0.0f;
 	float AxisY = 0.0f;
-	
+
 	UFUNCTION()
 	void InputAxisX(float Value);
 	UFUNCTION()
 	void InputAxisY(float Value);
 
 	float CharacterMaxMovementSpeed;
-	
+
 	UFUNCTION()
 	void MovementTick();
 	UFUNCTION(BlueprintCallable)
 	void CharacterUpdate();
 	UFUNCTION(BlueprintCallable)
 	void ChangeMovementState(EMovementState NewMovementState);
-	
+
 	UFUNCTION(BlueprintCallable)
 	void CharacterAim();
 	UFUNCTION(BlueprintCallable)
@@ -101,5 +101,12 @@ public:
 	// UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Movement")
 	// FVector MousePositionVector;
 
-	float Stamina;
+	float MaxStamina = 100.f;
+	float Stamina = MaxStamina;
+	float RecoveryStaminaPerTick = 0.5f;
+	float SpendStaminaPerTick = 0.1f;
+	bool IsStaminaRecovering;
+
+	void RecoveryStamina();
+	FTimerHandle StaminaRecoveryTimerHandle;
 };

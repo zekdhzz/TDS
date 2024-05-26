@@ -149,18 +149,35 @@ void ATDSCharacter::MovementTick()
 {
 	if (IsSprinting && AxisX == -1)
 	{
+		//if not running forward
 		ChangeMovementState(EMovementState::Run_State);
 	}
 	else if (IsSprinting)
 	{
-		ChangeMovementState(EMovementState::Sprint_State);
+		// if running forward
+		if (!IsStaminaRecovering && !FMath::IsNearlyEqual(Stamina, 0.0f, 0.5f))
+		{
+			Stamina = FMath::Max(0.0f, Stamina - SpendStaminaPerTick);
+			ChangeMovementState(EMovementState::Sprint_State);
+			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+			//                                  FString::Printf(TEXT("Stamina: %f"), Stamina));
+			if (!StaminaRecoveryTimerHandle.IsValid() && FMath::IsNearlyEqual(Stamina, 0.0f, 0.5f))
+			{
+				GetWorldTimerManager().SetTimer(StaminaRecoveryTimerHandle, this, &ATDSCharacter::RecoveryStamina,
+				                                GetWorld()->GetDeltaSeconds(), true, 3.0f);
+			}
+		}
+		else
+		{
+			ChangeMovementState(EMovementState::Run_State);
+		}
 	}
 
 	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
-	// 									 FString::Printf(TEXT("speed: %f"), CharacterMaxMovementSpeed));
+	//                                  FString::Printf(TEXT("speed: %f"), CharacterMaxMovementSpeed));
 	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
-	// 									 FString::Printf(TEXT("speed: %hhd"), MovementState));
-	
+	//                                  FString::Printf(TEXT("speed: %hhd"), MovementState));
+
 	APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (MyController)
 	{
@@ -282,4 +299,21 @@ void ATDSCharacter::PrintState() const
 {
 	UE_LOG(LogTemp, Log, TEXT("IsAiming: %d, IsWalking: %d, IsRunning: %d, IsSprinting: %d"),
 	       IsAiming, IsWalking, IsRunning, IsSprinting)
+}
+
+void ATDSCharacter::RecoveryStamina()
+{
+	ChangeMovementState(EMovementState::Run_State);
+	Stamina += FMath::Min(MaxStamina, RecoveryStaminaPerTick);
+	IsStaminaRecovering = true;
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+	                                 FString::Printf(TEXT("Stamina recovering %f"), Stamina));
+	if (FMath::IsNearlyEqual(Stamina, MaxStamina) || Stamina > MaxStamina)
+	{
+		Stamina = MaxStamina;
+		IsStaminaRecovering = false;
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+		                                 FString::Printf(TEXT("Stamina recovery finished")));
+		GetWorldTimerManager().ClearTimer(StaminaRecoveryTimerHandle);
+	}
 }
