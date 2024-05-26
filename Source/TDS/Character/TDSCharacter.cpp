@@ -304,16 +304,16 @@ void ATDSCharacter::PrintState() const
 void ATDSCharacter::RecoveryStamina()
 {
 	ChangeMovementState(EMovementState::Run_State);
-	Stamina += FMath::Min(MaxStamina, RecoveryStaminaPerTick);
+	Stamina = FMath::Min(MaxStamina, Stamina + RecoveryStaminaPerTick);
 	IsStaminaRecovering = true;
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
-	                                 FString::Printf(TEXT("Stamina recovering %f"), Stamina));
-	if (FMath::IsNearlyEqual(Stamina, MaxStamina) || Stamina > MaxStamina)
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+	//                                  FString::Printf(TEXT("Stamina recovering %f"), Stamina));
+	if (FMath::IsNearlyEqual(Stamina, MaxStamina))
 	{
 		Stamina = MaxStamina;
 		IsStaminaRecovering = false;
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
-		                                 FString::Printf(TEXT("Stamina recovery finished")));
+		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+		//                                  FString::Printf(TEXT("Stamina recovery finished")));
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryTimerHandle);
 	}
 }
