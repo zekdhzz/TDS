@@ -63,6 +63,7 @@ ATDSCharacter::ATDSCharacter()
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
 	CameraZoomDistance = CameraBoom->TargetArmLength;
+	CharacterMaxMovementSpeed = MovementInfo.RunSpeed;
 }
 
 void ATDSCharacter::Tick(float DeltaSeconds)
@@ -107,7 +108,8 @@ void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAxis("MouseWheel", this, &ATDSCharacter::CameraZoomInput);
 	PlayerInputComponent->BindAction("Walk", IE_Pressed, this, &ATDSCharacter::CharacterWalk);
 	PlayerInputComponent->BindAction("Walk", IE_Released, this, &ATDSCharacter::CharacterRun);
-	PlayerInputComponent->BindAction("Run", IE_Pressed, this, &ATDSCharacter::CharacterRun);
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ATDSCharacter::CharacterSprint);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ATDSCharacter::CharacterRun);
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ATDSCharacter::CharacterAim);
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ATDSCharacter::CharacterRun);
 }
@@ -115,18 +117,50 @@ void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 void ATDSCharacter::InputAxisX(const float Value)
 {
 	AxisX = Value;
+	if ((Controller != nullptr) && (Value != 0.0f))
+	{
+		// find out which way is forward
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		// get forward vector
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(Direction, Value);
+	}
 }
 
 void ATDSCharacter::InputAxisY(const float Value)
 {
 	AxisY = Value;
+	if ((Controller != nullptr) && (Value != 0.0f))
+	{
+		// find out which way is right
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		// get right vector 
+		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		// add movement in that direction
+		AddMovementInput(Direction, Value);
+	}
 }
 
 void ATDSCharacter::MovementTick()
 {
-	AddMovementInput(FVector(1.0f, 0.0f, 0.0f), AxisX);
-	AddMovementInput(FVector(0.0f, 1.0f, 0.0f), AxisY);
+	if (IsSprinting && AxisX == -1)
+	{
+		ChangeMovementState(EMovementState::Run_State);
+	}
+	else if (IsSprinting)
+	{
+		ChangeMovementState(EMovementState::Sprint_State);
+	}
 
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+	// 									 FString::Printf(TEXT("speed: %f"), CharacterMaxMovementSpeed));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
+	// 									 FString::Printf(TEXT("speed: %hhd"), MovementState));
+	
 	APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (MyController)
 	{
@@ -161,14 +195,17 @@ void ATDSCharacter::CharacterUpdate()
 {
 	switch (MovementState)
 	{
+	case EMovementState::Run_State:
+		CharacterMaxMovementSpeed = MovementInfo.RunSpeed;
+		break;
 	case EMovementState::Aim_State:
 		CharacterMaxMovementSpeed = MovementInfo.AimSpeed;
 		break;
 	case EMovementState::Walk_State:
 		CharacterMaxMovementSpeed = MovementInfo.WalkSpeed;
 		break;
-	case EMovementState::Run_State:
-		CharacterMaxMovementSpeed = MovementInfo.RunSpeed;
+	case EMovementState::Sprint_State:
+		CharacterMaxMovementSpeed = MovementInfo.SprintSpeed;
 		break;
 	}
 	GetCharacterMovement()->MaxWalkSpeed = CharacterMaxMovementSpeed;
@@ -211,15 +248,38 @@ void ATDSCharacter::SoothingCameraZoom()
 
 void ATDSCharacter::CharacterAim()
 {
+	IsAiming = true;
+	IsWalking = IsRunning = IsSprinting = false;
 	ChangeMovementState(EMovementState::Aim_State);
+	//PrintState();
 }
 
 void ATDSCharacter::CharacterWalk()
 {
+	IsWalking = true;
+	IsAiming = IsRunning = IsSprinting = false;
 	ChangeMovementState(EMovementState::Walk_State);
+	//PrintState();
 }
 
 void ATDSCharacter::CharacterRun()
 {
+	IsRunning = true;
+	IsAiming = IsWalking = IsSprinting = false;
 	ChangeMovementState(EMovementState::Run_State);
+	//PrintState();
+}
+
+void ATDSCharacter::CharacterSprint()
+{
+	IsSprinting = true;
+	IsAiming = IsWalking = IsRunning = false;
+	ChangeMovementState(EMovementState::Sprint_State);
+	//PrintState();
+}
+
+void ATDSCharacter::PrintState() const
+{
+	UE_LOG(LogTemp, Log, TEXT("IsAiming: %d, IsWalking: %d, IsRunning: %d, IsSprinting: %d"),
+	       IsAiming, IsWalking, IsRunning, IsSprinting)
 }
