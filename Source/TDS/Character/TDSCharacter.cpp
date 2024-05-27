@@ -147,13 +147,26 @@ void ATDSCharacter::InputAxisY(const float Value)
 
 void ATDSCharacter::MovementTick()
 {
-	if (IsSprinting && AxisX == -1)
+	//check if forward vector equals input vector
+	FVector(1.0f * AxisX, 1.0f * AxisY, 0.0f).
+		Equals(FVector(GetActorForwardVector().X, GetActorForwardVector().Y, 0.0f))
+			? IsMovingInDirectionToInput = true
+			: IsMovingInDirectionToInput = false;
+
+	// GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow,
+	//                                  FString::Printf(
+	// 	                                 TEXT("IsMovingInDirectionToInput: %d"), IsMovingInDirectionToInput));
+
+
+	if (IsSprinting && !IsMovingInDirectionToInput)
 	{
 		//if not running forward
 		ChangeMovementState(EMovementState::Run_State);
 	}
-	else if (IsSprinting)
+	else if (IsSprinting && IsMovingInDirectionToInput)
 	{
+		// GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow,
+		//                                  FString::Printf(TEXT("SPRINTING")));
 		// if running forward
 		if (!IsStaminaRecovering && !FMath::IsNearlyEqual(Stamina, 0.0f, 0.5f))
 		{
@@ -178,7 +191,7 @@ void ATDSCharacter::MovementTick()
 	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
 	//                                  FString::Printf(TEXT("speed: %hhd"), MovementState));
 
-	APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	const APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (MyController)
 	{
 		FHitResult HitResult;
@@ -198,7 +211,7 @@ void ATDSCharacter::MovementTick()
 			FVector WorldLocation;
 			FVector WorldDirection;
 			MyController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection);
-			FVector MousePosition = FVector(WorldLocation + WorldDirection * 500);
+			const FVector MousePosition = FVector(WorldLocation + WorldDirection * 500);
 			SetActorRotation(FRotator(
 				0.0f,
 				UKismetMathLibrary::FindLookAtRotation(

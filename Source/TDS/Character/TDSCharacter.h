@@ -95,6 +95,7 @@ public:
 	bool IsRunning;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Movement")
 	bool IsSprinting;
+	bool IsMovingInDirectionToInput;
 
 	void PrintState() const;
 
