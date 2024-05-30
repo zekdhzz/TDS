@@ -42,9 +42,9 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
-	float CameraMinHeight = 800.0f;
+	float CameraMinHeight = 1000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
-	float CameraMaxHeight = 1500.0f;
+	float CameraMaxHeight = 2000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
 	float CameraZoomDistance = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
