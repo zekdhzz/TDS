@@ -26,7 +26,7 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns CursorToWorld subobject **/
 	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
-
+	
 private:
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -107,7 +107,6 @@ public:
 	float RecoveryStaminaPerTick = 0.5f;
 	float SpendStaminaPerTick = 0.1f;
 	bool IsStaminaRecovering;
-
-	void RecoveryStamina();
 	FTimerHandle StaminaRecoveryTimerHandle;
+	void RecoveryStamina();
 };
