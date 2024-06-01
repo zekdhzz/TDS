@@ -26,7 +26,7 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns CursorToWorld subobject **/
 	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
-
+	
 private:
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -42,9 +42,9 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
-	float CameraMinHeight = 800.0f;
+	float CameraMinHeight = 1000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
-	float CameraMaxHeight = 1500.0f;
+	float CameraMaxHeight = 2000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
 	float CameraZoomDistance = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
@@ -107,7 +107,6 @@ public:
 	float RecoveryStaminaPerTick = 0.5f;
 	float SpendStaminaPerTick = 0.1f;
 	bool IsStaminaRecovering;
-
-	void RecoveryStamina();
 	FTimerHandle StaminaRecoveryTimerHandle;
+	void RecoveryStamina();
 };
