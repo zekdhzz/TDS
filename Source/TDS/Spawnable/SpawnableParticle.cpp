@@ -14,7 +14,7 @@ ASpawnableParticle::ASpawnableParticle()
 
 	CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
 	CollisionSphere->SetCollisionProfileName(TEXT("Trigger"));
-	CollisionSphere->SetSphereRadius(1000);
+	CollisionSphere->SetSphereRadius(SphereRadius);
 	SetRootComponent(CollisionSphere);
 	CollisionSphere->SetHiddenInGame(false);
 
@@ -46,10 +46,10 @@ void ASpawnableParticle::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 	UE_LOG(LogTemp, Error, TEXT("OnOverlapBegin"));
 	IsLoop = true;
 
-	if (!VFXSpawnTimerHandle.IsValid())
+	if (!VfxSpawnTimerHandle.IsValid())
 	{
 		UE_LOG(LogTemp, Error, TEXT("VFXSpawnTimerHandle !IsValid"));
-		GetWorldTimerManager().SetTimer(VFXSpawnTimerHandle, this,
+		GetWorldTimerManager().SetTimer(VfxSpawnTimerHandle, this,
 		                                &ASpawnableParticle::SpawnParticle,
 		                                SpawnRate, true, 0.0f);
 	}
@@ -72,25 +72,11 @@ void ASpawnableParticle::SpawnParticle()
 		ATDSCharacter* CurrentPawn = Cast<ATDSCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), Sound,
-		                                      CurrentPawn->GetCameraBoom()->GetComponentLocation());
-
-		// UGameplayStatics::PlaySoundAtLocation(GetWorld(), Sound, FVector(
-		// 	                                      GetActorLocation().X,
-		// 	                                      GetActorLocation().Y,
-		// 	                                      CurrentPawn->GetCameraBoom()->GetComponentLocation().Z + CurrentPawn->
-		// 	                                      GetCameraBoom()->
-		// 	                                      TargetArmLength));
-
-		UE_LOG(LogTemp, Error, TEXT("GetComponentLocation: %s"),
-		       *FVector(
-			       CurrentPawn->GetCameraBoom()->GetComponentLocation().X,
-			       CurrentPawn->GetCameraBoom()->GetComponentLocation().Y,
-			       CurrentPawn->GetCameraBoom()->GetComponentLocation().Z + CurrentPawn->GetCameraBoom()->
-			       TargetArmLength).ToString());
+		                                      CurrentPawn->GetCameraBoom()->GetComponentLocation(), SoundVolume);
 	}
 	else
 	{
 		Vfx->DeactivateSystem();
-		GetWorldTimerManager().ClearTimer(VFXSpawnTimerHandle);
+		GetWorldTimerManager().ClearTimer(VfxSpawnTimerHandle);
 	}
 }
