@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "TDS/FuncLibrary/TDSTypes.h"
+#include "TDS/Enumerations/TDSCharacterEnums.h"
+#include "TDS/Structs/TDSCharacterStructs.h"
 #include "TDSCharacter.generated.h"
 
 UCLASS(Blueprintable)
@@ -26,7 +27,7 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns CursorToWorld subobject **/
 	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
-	
+
 private:
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -58,7 +59,7 @@ public:
 	FTimerHandle CameraSmoothTimerHandle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
-	EMovementState MovementState = EMovementState::Run_State;
+	ECharacterMovementState MovementState = ECharacterMovementState::Run_State;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
 	FCharacterSpeed MovementInfo;
 	float AxisX = 0.0f;
@@ -76,7 +77,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CharacterUpdate();
 	UFUNCTION(BlueprintCallable)
-	void ChangeMovementState(EMovementState NewMovementState);
+	void ChangeMovementState(ECharacterMovementState NewMovementState);
 
 	UFUNCTION(BlueprintCallable)
 	void CharacterAim();

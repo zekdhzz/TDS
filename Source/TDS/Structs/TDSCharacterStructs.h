@@ -1,16 +1,8 @@
-#pragma once
+﻿#pragma once
 
+#include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "TDSTypes.generated.h"
-
-UENUM(BlueprintType)
-enum class EMovementState : uint8
-{
-	Aim_State UMETA(DisplayName = "Aim State"),
-	Walk_State UMETA(DisplayName = "Walk State"),
-	Run_State UMETA(DisplayName = "Run State"),
-	Sprint_State UMETA(DisplayName = "Sprint State")
-};
+#include "TDSCharacterStructs.generated.h"
 
 USTRUCT(BlueprintType)
 struct FCharacterSpeed
@@ -28,7 +20,7 @@ struct FCharacterSpeed
 };
 
 UCLASS()
-class TDS_API UTDSTypes : public UBlueprintFunctionLibrary
+class TDS_API UTDSCharacterStructs : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 };

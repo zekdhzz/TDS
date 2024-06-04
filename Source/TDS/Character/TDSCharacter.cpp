@@ -8,7 +8,6 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Materials/Material.h"
@@ -63,32 +62,18 @@ ATDSCharacter::ATDSCharacter()
 	CharacterMaxMovementSpeed = MovementInfo.RunSpeed;
 }
 
-void ATDSCharacter::Tick(float DeltaSeconds)
+void ATDSCharacter::Tick(const float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
 	if (CursorToWorld != nullptr)
 	{
-		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
-		{
-			if (UWorld* World = GetWorld())
-			{
-				FHitResult HitResult;
-				FCollisionQueryParams Params(NAME_None, FCollisionQueryParams::GetUnknownStatId());
-				FVector StartLocation = TopDownCameraComponent->GetComponentLocation();
-				FVector EndLocation = TopDownCameraComponent->GetComponentRotation().Vector() * 2000.0f;
-				Params.AddIgnoredActor(this);
-				World->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, Params);
-				FQuat SurfaceRotation = HitResult.ImpactNormal.ToOrientationRotator().Quaternion();
-				CursorToWorld->SetWorldLocationAndRotation(HitResult.Location, SurfaceRotation);
-			}
-		}
-		else if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		if (const APlayerController* PC = Cast<APlayerController>(GetController()))
 		{
 			FHitResult TraceHitResult;
 			PC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
-			FVector CursorFV = TraceHitResult.ImpactNormal;
-			FRotator CursorR = CursorFV.Rotation();
+			const FVector CursorFV = TraceHitResult.ImpactNormal;
+			const FRotator CursorR = CursorFV.Rotation();
 			CursorToWorld->SetWorldLocation(TraceHitResult.Location);
 			CursorToWorld->SetWorldRotation(CursorR);
 		}
@@ -158,7 +143,7 @@ void ATDSCharacter::MovementTick()
 	if (IsSprinting && !IsMovingInDirectionToInput)
 	{
 		//if not running forward
-		ChangeMovementState(EMovementState::Run_State);
+		ChangeMovementState(ECharacterMovementState::Run_State);
 	}
 	else if (IsSprinting && IsMovingInDirectionToInput)
 	{
@@ -168,7 +153,7 @@ void ATDSCharacter::MovementTick()
 		if (!IsStaminaRecovering && !FMath::IsNearlyEqual(Stamina, 0.0f, 0.5f))
 		{
 			Stamina = FMath::Max(0.0f, Stamina - SpendStaminaPerTick);
-			ChangeMovementState(EMovementState::Sprint_State);
+			ChangeMovementState(ECharacterMovementState::Sprint_State);
 			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
 			//                                  FString::Printf(TEXT("Stamina: %f"), Stamina));
 			if (!StaminaRecoveryTimerHandle.IsValid() && FMath::IsNearlyEqual(Stamina, 0.0f, 0.5f))
@@ -179,7 +164,7 @@ void ATDSCharacter::MovementTick()
 		}
 		else
 		{
-			ChangeMovementState(EMovementState::Run_State);
+			ChangeMovementState(ECharacterMovementState::Run_State);
 		}
 	}
 
@@ -222,23 +207,23 @@ void ATDSCharacter::CharacterUpdate()
 {
 	switch (MovementState)
 	{
-	case EMovementState::Run_State:
+	case ECharacterMovementState::Run_State:
 		CharacterMaxMovementSpeed = MovementInfo.RunSpeed;
 		break;
-	case EMovementState::Aim_State:
+	case ECharacterMovementState::Aim_State:
 		CharacterMaxMovementSpeed = MovementInfo.AimSpeed;
 		break;
-	case EMovementState::Walk_State:
+	case ECharacterMovementState::Walk_State:
 		CharacterMaxMovementSpeed = MovementInfo.WalkSpeed;
 		break;
-	case EMovementState::Sprint_State:
+	case ECharacterMovementState::Sprint_State:
 		CharacterMaxMovementSpeed = MovementInfo.SprintSpeed;
 		break;
 	}
 	GetCharacterMovement()->MaxWalkSpeed = CharacterMaxMovementSpeed;
 }
 
-void ATDSCharacter::ChangeMovementState(const EMovementState NewMovementState)
+void ATDSCharacter::ChangeMovementState(const ECharacterMovementState NewMovementState)
 {
 	MovementState = NewMovementState;
 	CharacterUpdate();
@@ -277,7 +262,7 @@ void ATDSCharacter::CharacterAim()
 {
 	IsAiming = true;
 	IsWalking = IsRunning = IsSprinting = false;
-	ChangeMovementState(EMovementState::Aim_State);
+	ChangeMovementState(ECharacterMovementState::Aim_State);
 	//PrintState();
 }
 
@@ -285,7 +270,7 @@ void ATDSCharacter::CharacterWalk()
 {
 	IsWalking = true;
 	IsAiming = IsRunning = IsSprinting = false;
-	ChangeMovementState(EMovementState::Walk_State);
+	ChangeMovementState(ECharacterMovementState::Walk_State);
 	//PrintState();
 }
 
@@ -293,7 +278,7 @@ void ATDSCharacter::CharacterRun()
 {
 	IsRunning = true;
 	IsAiming = IsWalking = IsSprinting = false;
-	ChangeMovementState(EMovementState::Run_State);
+	ChangeMovementState(ECharacterMovementState::Run_State);
 	//PrintState();
 }
 
@@ -301,7 +286,7 @@ void ATDSCharacter::CharacterSprint()
 {
 	IsSprinting = true;
 	IsAiming = IsWalking = IsRunning = false;
-	ChangeMovementState(EMovementState::Sprint_State);
+	ChangeMovementState(ECharacterMovementState::Sprint_State);
 	//PrintState();
 }
 
@@ -313,7 +298,7 @@ void ATDSCharacter::PrintState() const
 
 void ATDSCharacter::RecoveryStamina()
 {
-	ChangeMovementState(EMovementState::Run_State);
+	ChangeMovementState(ECharacterMovementState::Run_State);
 	Stamina = FMath::Min(MaxStamina, Stamina + RecoveryStaminaPerTick);
 	IsStaminaRecovering = true;
 	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
