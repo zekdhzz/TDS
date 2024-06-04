@@ -1,6 +1,3 @@
-
-
-
 #include "InteractableActor.h"
 
 // Sets default values

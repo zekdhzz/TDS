@@ -6,10 +6,8 @@
 
 AInteractableDoorTrigger::AInteractableDoorTrigger()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-
+	
 	TriggerCapsule = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerCapsule"));
 	TriggerCapsule->SetCollisionProfileName(TEXT("Trigger"));
 	RootComponent = TriggerCapsule;
@@ -34,8 +32,6 @@ AInteractableDoorTrigger::AInteractableDoorTrigger()
 void AInteractableDoorTrigger::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//DrawDebugBox(GetWorld(), GetActorLocation(), BoxComp->GetScaledBoxExtent(), FQuat(GetActorRotation()), FColor::Turquoise, true, 999, 0, 2);
 }
 
 void AInteractableDoorTrigger::Tick(float DeltaTime)
@@ -45,6 +41,7 @@ void AInteractableDoorTrigger::Tick(float DeltaTime)
 
 void AInteractableDoorTrigger::SoothingDoorTransformOpen()
 {
+	//TODO: debug open and close speed
 	if (!FMath::IsNearlyEqual(DoorMesh->GetRelativeLocation().Z, DoorInitPosition.Z - DoorOffset, 0.5f))
 	{
 		float EndLocationStep = FMath::FInterpTo(DoorMesh->GetRelativeLocation().Z, DoorInitPosition.Z - DoorOffset,
