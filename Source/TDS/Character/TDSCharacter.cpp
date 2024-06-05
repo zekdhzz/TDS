@@ -12,6 +12,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
+#include "TDS/Items/Weapon/WeaponDefault.h"
 
 ATDSCharacter::ATDSCharacter()
 {
@@ -42,18 +43,6 @@ ATDSCharacter::ATDSCharacter()
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// Create a decal in the world to show the cursor's location
-	CursorToWorld = CreateDefaultSubobject<UDecalComponent>("CursorToWorld");
-	CursorToWorld->SetupAttachment(RootComponent);
-	static ConstructorHelpers::FObjectFinder<UMaterial> DecalMaterialAsset(
-		TEXT("Material'/Game/Enviroment/Assets/M_Cursor_Decal.M_Cursor_Decal'"));
-	if (DecalMaterialAsset.Succeeded())
-	{
-		CursorToWorld->SetDecalMaterial(DecalMaterialAsset.Object);
-	}
-	CursorToWorld->DecalSize = FVector(16.0f, 32.0f, 32.0f);
-	CursorToWorld->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f).Quaternion());
-
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
@@ -62,11 +51,23 @@ ATDSCharacter::ATDSCharacter()
 	CharacterMaxMovementSpeed = MovementInfo.RunSpeed;
 }
 
+void ATDSCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	InitWeapon();
+
+	if (CursorMaterial)
+	{
+		CurrentCursor = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), CursorMaterial, CursorSize, FVector(0));
+	}
+}
+
 void ATDSCharacter::Tick(const float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (CursorToWorld != nullptr)
+	if (CurrentCursor)
 	{
 		if (const APlayerController* PC = Cast<APlayerController>(GetController()))
 		{
@@ -74,8 +75,8 @@ void ATDSCharacter::Tick(const float DeltaSeconds)
 			PC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
 			const FVector CursorFV = TraceHitResult.ImpactNormal;
 			const FRotator CursorR = CursorFV.Rotation();
-			CursorToWorld->SetWorldLocation(TraceHitResult.Location);
-			CursorToWorld->SetWorldRotation(CursorR);
+			CurrentCursor->SetWorldLocation(TraceHitResult.Location);
+			CurrentCursor->SetWorldRotation(CursorR);
 		}
 	}
 	MovementTick();
@@ -94,6 +95,8 @@ void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ATDSCharacter::CharacterRun);
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ATDSCharacter::CharacterAim);
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ATDSCharacter::CharacterRun);
+	PlayerInputComponent->BindAction("FireEvent", IE_Pressed, this, &ATDSCharacter::InputAttackPressed);
+	PlayerInputComponent->BindAction("FireEvent", IE_Released, this, &ATDSCharacter::InputAttackReleased);
 }
 
 void ATDSCharacter::InputAxisX(const float Value)
@@ -127,6 +130,18 @@ void ATDSCharacter::InputAxisY(const float Value)
 	}
 }
 
+void ATDSCharacter::InputAttackPressed()
+{
+	UE_LOG(LogTemp, Warning, TEXT("InputAttackPressed"));
+	AttackCharEvent(true);
+}
+
+void ATDSCharacter::InputAttackReleased()
+{
+	UE_LOG(LogTemp, Warning, TEXT("InputAttackReleased"));
+	AttackCharEvent(false);
+}
+
 void ATDSCharacter::MovementTick()
 {
 	//check if forward vector equals input vector
@@ -135,11 +150,6 @@ void ATDSCharacter::MovementTick()
 			? IsMovingInDirectionToInput = true
 			: IsMovingInDirectionToInput = false;
 
-	// GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow,
-	//                                  FString::Printf(
-	// 	                                 TEXT("IsMovingInDirectionToInput: %d"), IsMovingInDirectionToInput));
-
-
 	if (IsSprinting && !IsMovingInDirectionToInput)
 	{
 		//if not running forward
@@ -147,15 +157,11 @@ void ATDSCharacter::MovementTick()
 	}
 	else if (IsSprinting && IsMovingInDirectionToInput)
 	{
-		// GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow,
-		//                                  FString::Printf(TEXT("SPRINTING")));
 		// if running forward
 		if (!IsStaminaRecovering && !FMath::IsNearlyEqual(Stamina, 0.0f, 0.5f))
 		{
 			Stamina = FMath::Max(0.0f, Stamina - SpendStaminaPerTick);
 			ChangeMovementState(ECharacterMovementState::Sprint_State);
-			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
-			//                                  FString::Printf(TEXT("Stamina: %f"), Stamina));
 			if (!StaminaRecoveryTimerHandle.IsValid() && FMath::IsNearlyEqual(Stamina, 0.0f, 0.5f))
 			{
 				GetWorldTimerManager().SetTimer(StaminaRecoveryTimerHandle, this, &ATDSCharacter::RecoveryStamina,
@@ -167,11 +173,6 @@ void ATDSCharacter::MovementTick()
 			ChangeMovementState(ECharacterMovementState::Run_State);
 		}
 	}
-
-	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
-	//                                  FString::Printf(TEXT("speed: %f"), CharacterMaxMovementSpeed));
-	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
-	//                                  FString::Printf(TEXT("speed: %hhd"), MovementState));
 
 	const APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (MyController)
@@ -311,4 +312,47 @@ void ATDSCharacter::RecoveryStamina()
 		//                                  FString::Printf(TEXT("Stamina recovery finished")));
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryTimerHandle);
 	}
+}
+
+void ATDSCharacter::AttackCharEvent(const bool bIsFiring)
+{
+	if (GetCurrentWeapon())
+	{
+		GetCurrentWeapon()->SetWeaponStateFire(bIsFiring);
+	}
+	else UE_LOG(LogTemp, Warning, TEXT("ATPSCharacter::AttackCharEvent - CurrentWeapon -NULL"));
+}
+
+AWeaponDefault* ATDSCharacter::GetCurrentWeapon()
+{
+	return CurrentWeapon;
+}
+
+void ATDSCharacter::InitWeapon()
+{
+	if (InitWeaponClass)
+	{
+		FVector SpawnLocation = FVector(0);
+		FRotator SpawnRotation = FRotator(0);
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParams.Owner = GetOwner();
+		SpawnParams.Instigator = GetInstigator();
+
+		AWeaponDefault* myWeapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(InitWeaponClass, &SpawnLocation, &SpawnRotation, SpawnParams));
+		if (myWeapon)
+		{
+			FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
+			myWeapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
+			CurrentWeapon = myWeapon;	
+
+			myWeapon->UpdateStateWeapon(MovementState);
+		}
+	}	
+}
+
+UDecalComponent* ATDSCharacter::GetCursorToWorld()
+{
+	return CurrentCursor;
 }
