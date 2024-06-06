@@ -39,7 +39,7 @@ void AProjectileDefault::BeginPlay()
 	BulletCollisionSphere->OnComponentEndOverlap.AddDynamic(this, &AProjectileDefault::BulletCollisionSphereEndOverlap);
 }
 
-void AProjectileDefault::Tick(float DeltaTime)
+void AProjectileDefault::Tick(const float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
@@ -57,22 +57,22 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 {
 	if (OtherActor && Hit.PhysMaterial.IsValid())
 	{
-		EPhysicalSurface mySurfacetype = UGameplayStatics::GetSurfaceType(Hit);
-		if (ProjectileSetting.HitDecals.Contains(mySurfacetype))
+		EPhysicalSurface Surface = UGameplayStatics::GetSurfaceType(Hit);
+		if (ProjectileSetting.HitDecals.Contains(Surface))
 		{
-			UMaterialInterface* myMaterial = ProjectileSetting.HitDecals[mySurfacetype];
+			UMaterialInterface* Material = ProjectileSetting.HitDecals[Surface];
 
-			if (myMaterial && OtherComp)
+			if (Material && OtherComp)
 			{
-				UGameplayStatics::SpawnDecalAttached(myMaterial, FVector(20.0f), OtherComp, NAME_None, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(),EAttachLocation::KeepWorldPosition,10.0f);
+				UGameplayStatics::SpawnDecalAttached(Material, FVector(20.0f), OtherComp, NAME_None, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(),EAttachLocation::KeepWorldPosition,10.0f);
 			}
 		}
-		if (ProjectileSetting.HitFXs.Contains(mySurfacetype))
+		if (ProjectileSetting.HitFXs.Contains(Surface))
 		{
-			UParticleSystem* myParticle = ProjectileSetting.HitFXs[mySurfacetype];
-			if (myParticle)
+			UParticleSystem* ParticleSystem = ProjectileSetting.HitFXs[Surface];
+			if (ParticleSystem)
 			{
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), myParticle, FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint, FVector(1.0f)));
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ParticleSystem, FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint, FVector(1.0f)));
 			}
 		}
 		if (ProjectileSetting.HitSound)
@@ -80,7 +80,7 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 			UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.HitSound, Hit.ImpactPoint);
 		}
 	}
-	UGameplayStatics::ApplyDamage(OtherActor, ProjectileSetting.ProjectileDamage, GetInstigatorController(), this, NULL);
+	UGameplayStatics::ApplyDamage(OtherActor, ProjectileSetting.ProjectileDamage, GetInstigatorController(), this, nullptr);
 	ImpactProjectile();	
 }
 

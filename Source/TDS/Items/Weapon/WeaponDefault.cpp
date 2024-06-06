@@ -37,6 +37,7 @@ void AWeaponDefault::BeginPlay()
 void AWeaponDefault::Tick(const float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
 	FireTick(DeltaTime);
 	ReloadTick(DeltaTime);
 	DispersionTick(DeltaTime);
@@ -120,7 +121,6 @@ void AWeaponDefault::WeaponInit()
 	{
 		StaticMeshWeapon->DestroyComponent();
 	}
-
 	UpdateStateWeapon(ECharacterMovementState::Run_State);
 }
 
@@ -149,12 +149,10 @@ void AWeaponDefault::Fire()
 	FireTimer = WeaponSetting.RateOfFire;
 	WeaponInfo.Round = WeaponInfo.Round - 1;
 	ChangeDispersionByShot();
-
 	UGameplayStatics::SpawnSoundAtLocation(GetWorld(), WeaponSetting.SoundFireWeapon,
 	                                       ShootLocation->GetComponentLocation());
 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), WeaponSetting.EffectFireWeapon,
 	                                         ShootLocation->GetComponentTransform());
-
 	int8 NumberProjectile = GetNumberProjectileByShot();
 
 	if (ShootLocation)
@@ -163,39 +161,29 @@ void AWeaponDefault::Fire()
 		FRotator SpawnRotation = ShootLocation->GetComponentRotation();
 		FProjectileInfo ProjectileInfo;
 		ProjectileInfo = GetProjectile();
-
 		FVector EndLocation;
 		for (int8 i = 0; i < NumberProjectile; i++) //Shotgun
 		{
 			EndLocation = GetFireEndLocation();
-
 			FVector Dir = EndLocation - SpawnLocation;
-
 			Dir.Normalize();
-
-			FMatrix myMatrix(Dir, FVector(0, 1, 0), FVector(0, 0, 1), FVector::ZeroVector);
-			SpawnRotation = myMatrix.Rotator();
-
+			SpawnRotation = FMatrix(Dir, FVector(0, 0, 0), FVector(0, 0, 0), FVector::ZeroVector).Rotator();
 			if (ProjectileInfo.Projectile)
 			{
-				//Projectile Init ballistic fire
-
 				FActorSpawnParameters SpawnParams;
 				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 				SpawnParams.Owner = GetOwner();
 				SpawnParams.Instigator = GetInstigator();
-
-				AProjectileDefault* myProjectile = Cast<AProjectileDefault>(
+				AProjectileDefault* Projectile = Cast<AProjectileDefault>(
 					GetWorld()->SpawnActor(ProjectileInfo.Projectile, &SpawnLocation, &SpawnRotation, SpawnParams));
-				if (myProjectile)
+				if (Projectile)
 				{
-					myProjectile->InitProjectile(WeaponSetting.ProjectileSetting);
+					Projectile->InitProjectile(WeaponSetting.ProjectileSetting);
 				}
 			}
 			else
 			{
-				//ToDo Projectile null Init trace fire			
-
+				//ToDo Projectile null Init trace fire
 				//GetWorld()->LineTraceSingleByChannel()
 			}
 		}
@@ -203,45 +191,40 @@ void AWeaponDefault::Fire()
 }
 
 
-void AWeaponDefault::UpdateStateWeapon(const ECharacterMovementState NewMovementState)
+void AWeaponDefault::UpdateStateWeapon(const ECharacterMovementState MovementState)
 {
 	//ToDo Dispersion
 	BlockFire = false;
-
-	switch (NewMovementState)
+	switch (MovementState)
 	{
 	case ECharacterMovementState::Aim_State:
-
 		CurrentDispersionMax = WeaponSetting.DispersionWeapon.Aim_StateDispersionAimMax;
 		CurrentDispersionMin = WeaponSetting.DispersionWeapon.Aim_StateDispersionAimMin;
 		CurrentDispersionRecoil = WeaponSetting.DispersionWeapon.Aim_StateDispersionAimRecoil;
 		CurrentDispersionReduction = WeaponSetting.DispersionWeapon.Aim_StateDispersionReduction;
 		break;
 	case ECharacterMovementState::AimWalk_State:
-
 		CurrentDispersionMax = WeaponSetting.DispersionWeapon.AimWalk_StateDispersionAimMax;
 		CurrentDispersionMin = WeaponSetting.DispersionWeapon.AimWalk_StateDispersionAimMin;
 		CurrentDispersionRecoil = WeaponSetting.DispersionWeapon.AimWalk_StateDispersionAimRecoil;
 		CurrentDispersionReduction = WeaponSetting.DispersionWeapon.Aim_StateDispersionReduction;
 		break;
 	case ECharacterMovementState::Walk_State:
-
 		CurrentDispersionMax = WeaponSetting.DispersionWeapon.Walk_StateDispersionAimMax;
 		CurrentDispersionMin = WeaponSetting.DispersionWeapon.Walk_StateDispersionAimMin;
 		CurrentDispersionRecoil = WeaponSetting.DispersionWeapon.Walk_StateDispersionAimRecoil;
 		CurrentDispersionReduction = WeaponSetting.DispersionWeapon.Aim_StateDispersionReduction;
 		break;
 	case ECharacterMovementState::Run_State:
-
 		CurrentDispersionMax = WeaponSetting.DispersionWeapon.Run_StateDispersionAimMax;
 		CurrentDispersionMin = WeaponSetting.DispersionWeapon.Run_StateDispersionAimMin;
 		CurrentDispersionRecoil = WeaponSetting.DispersionWeapon.Run_StateDispersionAimRecoil;
 		CurrentDispersionReduction = WeaponSetting.DispersionWeapon.Aim_StateDispersionReduction;
 		break;
 	case ECharacterMovementState::Sprint_State:
+		//Block Fire
 		BlockFire = true;
 		SetWeaponStateFire(false); //set fire trigger to false
-	//Block Fire
 		break;
 	default:
 		break;
@@ -250,7 +233,7 @@ void AWeaponDefault::UpdateStateWeapon(const ECharacterMovementState NewMovement
 
 void AWeaponDefault::ChangeDispersionByShot()
 {
-	CurrentDispersion = CurrentDispersion + CurrentDispersionRecoil;
+	CurrentDispersion += CurrentDispersionRecoil;
 }
 
 float AWeaponDefault::GetCurrentDispersion() const
@@ -265,8 +248,7 @@ FVector AWeaponDefault::ApplyDispersionToShoot(const FVector DirectionShoot) con
 
 FVector AWeaponDefault::GetFireEndLocation() const
 {
-	FVector EndLocation = FVector(0.f);
-
+	FVector EndLocation;
 	const FVector TmpV = (ShootLocation->GetComponentLocation() - ShootEndLocation);
 	//UE_LOG(LogTemp, Warning, TEXT("Vector: X = %f. Y = %f. Size = %f"), tmpV.X, tmpV.Y, tmpV.Size());
 
@@ -289,8 +271,6 @@ FVector AWeaponDefault::GetFireEndLocation() const
 			              WeaponSetting.DistacneTrace, GetCurrentDispersion() * PI / 180.f,
 			              GetCurrentDispersion() * PI / 180.f, 32, FColor::Emerald, false, .1f, (uint8)'\000', 1.0f);
 	}
-
-
 	if (ShowDebug)
 	{
 		//direction weapon look
@@ -316,7 +296,7 @@ int8 AWeaponDefault::GetNumberProjectileByShot() const
 	return WeaponSetting.NumberProjectileByShot;
 }
 
-int32 AWeaponDefault::GetWeaponRound()
+int32 AWeaponDefault::GetWeaponRound() const
 {
 	return WeaponInfo.Round;
 }
@@ -324,7 +304,6 @@ int32 AWeaponDefault::GetWeaponRound()
 void AWeaponDefault::InitReload()
 {
 	WeaponReloading = true;
-
 	ReloadTimer = WeaponSetting.ReloadTime;
 
 	//ToDo Anim reload
@@ -336,6 +315,5 @@ void AWeaponDefault::FinishReload()
 {
 	WeaponReloading = false;
 	WeaponInfo.Round = WeaponSetting.MaxRound;
-
 	OnWeaponReloadEnd.Broadcast();
 }

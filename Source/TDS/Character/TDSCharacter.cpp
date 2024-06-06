@@ -12,6 +12,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
+#include "TDS/Game/TDSGameInstance.h"
 #include "TDS/Items/Weapon/WeaponDefault.h"
 
 ATDSCharacter::ATDSCharacter()
@@ -331,45 +332,45 @@ AWeaponDefault* ATDSCharacter::GetCurrentWeapon() const
 
 void ATDSCharacter::InitWeapon(const FName IdWeaponName)
 {
-	// UTDSGameInstance* myGI = Cast<UTDSGameInstance>(GetGameInstance());
-	// FWeaponInfo myWeaponInfo;
-	// if (myGI)
-	// {
-	// 	if (myGI->GetWeaponInfoByName(IdWeaponName, myWeaponInfo))
-	// 	{
-	// 		if (myWeaponInfo.WeaponClass)
-	// 		{
-	// 			FVector SpawnLocation = FVector(0);
-	// 			FRotator SpawnRotation = FRotator(0);
-	//
-	// 			FActorSpawnParameters SpawnParams;
-	// 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	// 			SpawnParams.Owner = GetOwner();
-	// 			SpawnParams.Instigator = GetInstigator();
-	//
-	// 			AWeaponDefault* myWeapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(myWeaponInfo.WeaponClass, &SpawnLocation, &SpawnRotation, SpawnParams));
-	// 			if (myWeapon)
-	// 			{
-	// 				FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
-	// 				myWeapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
-	// 				CurrentWeapon = myWeapon;
-	// 				
-	// 				myWeapon->WeaponSetting = myWeaponInfo;
-	// 				myWeapon->WeaponInfo.Round = myWeaponInfo.MaxRound;
-	// 				//Remove !!! Debug
-	// 				myWeapon->ReloadTime = myWeaponInfo.ReloadTime;
-	// 				myWeapon->UpdateStateWeapon(MovementState);
-	//
-	// 				myWeapon->OnWeaponReloadStart.AddDynamic(this, &ATDSCharacter::WeaponReloadStart);
-	// 				myWeapon->OnWeaponReloadEnd.AddDynamic(this, &ATDSCharacter::WeaponReloadEnd);
-	// 			}
-	// 		}
-	// 	}
-	// 	else
-	// 	{
-	// 		UE_LOG(LogTemp, Warning, TEXT("ATPSCharacter::InitWeapon - Weapon not found in table -NULL"));
-	// 	}
-	// }
+	const UTDSGameInstance* GI = Cast<UTDSGameInstance>(GetGameInstance());
+	FWeaponInfo WeaponInfo;
+	if (GI)
+	{
+		if (GI->GetWeaponInfoByName(IdWeaponName, WeaponInfo))
+		{
+			if (WeaponInfo.WeaponClass)
+			{
+				FVector SpawnLocation = FVector(0);
+				FRotator SpawnRotation = FRotator(0);
+	
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+				SpawnParams.Owner = GetOwner();
+				SpawnParams.Instigator = GetInstigator();
+	
+				AWeaponDefault* Weapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(WeaponInfo.WeaponClass, &SpawnLocation, &SpawnRotation, SpawnParams));
+				if (Weapon)
+				{
+					const FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
+					Weapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
+					CurrentWeapon = Weapon;
+					
+					Weapon->WeaponSetting = WeaponInfo;
+					Weapon->WeaponInfo.Round = WeaponInfo.MaxRound;
+					//Remove !!! Debug
+					Weapon->ReloadTime = WeaponInfo.ReloadTime;
+					Weapon->UpdateStateWeapon(MovementState);
+	
+					Weapon->OnWeaponReloadStart.AddDynamic(this, &ATDSCharacter::WeaponReloadStart);
+					Weapon->OnWeaponReloadEnd.AddDynamic(this, &ATDSCharacter::WeaponReloadEnd);
+				}
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ATPSCharacter::InitWeapon - Weapon not found in table -NULL"));
+		}
+	}
 }
 
 UDecalComponent* ATDSCharacter::GetCursorToWorld() const

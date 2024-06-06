@@ -63,7 +63,7 @@ public:
 
 	void Fire();
 
-	void UpdateStateWeapon(ECharacterMovementState NewMovementState);
+	void UpdateStateWeapon(ECharacterMovementState MovementState);
 	void ChangeDispersionByShot();
 	float GetCurrentDispersion() const;
 	FVector ApplyDispersionToShoot(FVector DirectionShoot)const;
@@ -91,7 +91,7 @@ public:
 	FVector ShootEndLocation = FVector(0);
 
 	UFUNCTION(BlueprintCallable)
-	int32 GetWeaponRound();
+	int32 GetWeaponRound() const;
 	void InitReload();
 	void FinishReload();
 
