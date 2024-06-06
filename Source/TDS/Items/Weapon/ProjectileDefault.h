@@ -9,31 +9,40 @@ UCLASS()
 class TDS_API AProjectileDefault : public AActor
 {
 	GENERATED_BODY()
-	
+
 public:
 	AProjectileDefault();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Components)
-	class UStaticMeshComponent* BulletMesh = nullptr;
+	UStaticMeshComponent* BulletMesh = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Components)
 	class USphereComponent* BulletCollisionSphere = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Components)
 	class UProjectileMovementComponent* BulletProjectileMovement = nullptr;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Components)
-	class UParticleSystemComponent* BulletFX = nullptr;
+	UParticleSystemComponent* BulletFX = nullptr;
 
 	FProjectileInfo ProjectileSetting;
-	
+
 protected:
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	virtual void Tick(float DeltaTime) override;
 
+	void InitProjectile(const FProjectileInfo& InitParam);
+	
 	UFUNCTION()
-	void BulletCollisionSphereHit(class UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	void BulletCollisionSphereHit(class UPrimitiveComponent* HitComp, AActor* OtherActor,
+	                              UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	UFUNCTION()
-	void BulletCollisionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void BulletCollisionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	                                       UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+	                                       const FHitResult& SweepResult);
 	UFUNCTION()
-	void BulletCollisionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	void BulletCollisionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	                                     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
+	virtual void ImpactProjectile();
 };

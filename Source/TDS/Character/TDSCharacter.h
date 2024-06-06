@@ -41,9 +41,9 @@ private:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
-	float CameraMinHeight = 1000.0f;
+	float CameraMinHeight = 1500.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
-	float CameraMaxHeight = 2000.0f;
+	float CameraMaxHeight = 3000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
 	float CameraZoomDistance = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
@@ -62,7 +62,7 @@ public:
 	FVector CursorSize = FVector(20.0f, 40.0f, 40.0f);
 	UDecalComponent* CurrentCursor = nullptr;
 	UFUNCTION(BlueprintCallable)
-	UDecalComponent* GetCursorToWorld();
+	UDecalComponent* GetCursorToWorld() const;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
 	ECharacterMovementState MovementState = ECharacterMovementState::Run_State;
@@ -117,15 +117,28 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Demo")
 	TSubclassOf<AWeaponDefault> InitWeaponClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Demo")
+	FName InitWeaponName;
 	
 	UFUNCTION(BlueprintCallable)
 	void AttackCharEvent(bool bIsFiring);
 	AWeaponDefault* CurrentWeapon = nullptr;
 	UFUNCTION(BlueprintCallable)
-	AWeaponDefault* GetCurrentWeapon();
+	AWeaponDefault* GetCurrentWeapon() const;
 	UFUNCTION(BlueprintCallable)
-	void InitWeapon();
-
+	void InitWeapon(FName IdWeaponName);
+	UFUNCTION(BlueprintCallable)
+	void TryReloadWeapon();
+	UFUNCTION()
+	void WeaponReloadStart(UAnimMontage* Anim);
+	UFUNCTION()
+	void WeaponReloadEnd();
+	UFUNCTION(BlueprintNativeEvent)
+	void WeaponReloadStart_BP(UAnimMontage* Anim);
+	UFUNCTION(BlueprintNativeEvent)
+	void WeaponReloadEnd_BP();
+	
 	//for debug
 	void PrintState() const;
 };

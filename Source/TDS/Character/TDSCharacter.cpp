@@ -55,7 +55,7 @@ void ATDSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InitWeapon();
+	InitWeapon(InitWeaponName);
 
 	if (CursorMaterial)
 	{
@@ -97,6 +97,7 @@ void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ATDSCharacter::CharacterRun);
 	PlayerInputComponent->BindAction("FireEvent", IE_Pressed, this, &ATDSCharacter::InputAttackPressed);
 	PlayerInputComponent->BindAction("FireEvent", IE_Released, this, &ATDSCharacter::InputAttackReleased);
+	PlayerInputComponent->BindAction("ReloadEvent", IE_Released, this, &ATDSCharacter::TryReloadWeapon);
 }
 
 void ATDSCharacter::InputAxisX(const float Value)
@@ -323,36 +324,85 @@ void ATDSCharacter::AttackCharEvent(const bool bIsFiring)
 	else UE_LOG(LogTemp, Warning, TEXT("ATPSCharacter::AttackCharEvent - CurrentWeapon -NULL"));
 }
 
-AWeaponDefault* ATDSCharacter::GetCurrentWeapon()
+AWeaponDefault* ATDSCharacter::GetCurrentWeapon() const
 {
 	return CurrentWeapon;
 }
 
-void ATDSCharacter::InitWeapon()
+void ATDSCharacter::InitWeapon(const FName IdWeaponName)
 {
-	if (InitWeaponClass)
-	{
-		FVector SpawnLocation = FVector(0);
-		FRotator SpawnRotation = FRotator(0);
-
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnParams.Owner = GetOwner();
-		SpawnParams.Instigator = GetInstigator();
-
-		AWeaponDefault* myWeapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(InitWeaponClass, &SpawnLocation, &SpawnRotation, SpawnParams));
-		if (myWeapon)
-		{
-			FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
-			myWeapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
-			CurrentWeapon = myWeapon;	
-
-			myWeapon->UpdateStateWeapon(MovementState);
-		}
-	}	
+	// UTDSGameInstance* myGI = Cast<UTDSGameInstance>(GetGameInstance());
+	// FWeaponInfo myWeaponInfo;
+	// if (myGI)
+	// {
+	// 	if (myGI->GetWeaponInfoByName(IdWeaponName, myWeaponInfo))
+	// 	{
+	// 		if (myWeaponInfo.WeaponClass)
+	// 		{
+	// 			FVector SpawnLocation = FVector(0);
+	// 			FRotator SpawnRotation = FRotator(0);
+	//
+	// 			FActorSpawnParameters SpawnParams;
+	// 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	// 			SpawnParams.Owner = GetOwner();
+	// 			SpawnParams.Instigator = GetInstigator();
+	//
+	// 			AWeaponDefault* myWeapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(myWeaponInfo.WeaponClass, &SpawnLocation, &SpawnRotation, SpawnParams));
+	// 			if (myWeapon)
+	// 			{
+	// 				FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
+	// 				myWeapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
+	// 				CurrentWeapon = myWeapon;
+	// 				
+	// 				myWeapon->WeaponSetting = myWeaponInfo;
+	// 				myWeapon->WeaponInfo.Round = myWeaponInfo.MaxRound;
+	// 				//Remove !!! Debug
+	// 				myWeapon->ReloadTime = myWeaponInfo.ReloadTime;
+	// 				myWeapon->UpdateStateWeapon(MovementState);
+	//
+	// 				myWeapon->OnWeaponReloadStart.AddDynamic(this, &ATDSCharacter::WeaponReloadStart);
+	// 				myWeapon->OnWeaponReloadEnd.AddDynamic(this, &ATDSCharacter::WeaponReloadEnd);
+	// 			}
+	// 		}
+	// 	}
+	// 	else
+	// 	{
+	// 		UE_LOG(LogTemp, Warning, TEXT("ATPSCharacter::InitWeapon - Weapon not found in table -NULL"));
+	// 	}
+	// }
 }
 
-UDecalComponent* ATDSCharacter::GetCursorToWorld()
+UDecalComponent* ATDSCharacter::GetCursorToWorld() const
 {
 	return CurrentCursor;
+}
+
+
+void ATDSCharacter::TryReloadWeapon()
+{
+	if (CurrentWeapon)
+	{
+		if (CurrentWeapon->GetWeaponRound() <= CurrentWeapon->WeaponSetting.MaxRound)
+			CurrentWeapon->InitReload();
+	}
+}
+
+void ATDSCharacter::WeaponReloadStart(UAnimMontage* Anim)
+{
+	WeaponReloadStart_BP(Anim);
+}
+
+void ATDSCharacter::WeaponReloadEnd()
+{
+	WeaponReloadEnd_BP();
+}
+
+void ATDSCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage* Anim)
+{
+	// in BP
+}
+
+void ATDSCharacter::WeaponReloadEnd_BP_Implementation()
+{
+	// in BP
 }
