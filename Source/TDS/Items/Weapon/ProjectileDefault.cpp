@@ -31,7 +31,7 @@ AProjectileDefault::AProjectileDefault()
 	BulletProjectileMovement->MaxSpeed = 0.f;
 
 	BulletProjectileMovement->bRotationFollowsVelocity = true;
-	BulletProjectileMovement->bShouldBounce = true;
+	BulletProjectileMovement->bShouldBounce = false;
 }
 
 void AProjectileDefault::BeginPlay()
@@ -52,7 +52,6 @@ void AProjectileDefault::InitProjectile(const FProjectileInfo& InitParam)
 	BulletProjectileMovement->InitialSpeed = InitParam.ProjectileInitSpeed;
 	BulletProjectileMovement->MaxSpeed = InitParam.ProjectileInitSpeed;
 	this->SetLifeSpan(InitParam.ProjectileLifeTime);
-
 	ProjectileSetting = InitParam;
 }
 

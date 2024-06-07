@@ -222,6 +222,9 @@ void ATDSCharacter::CharacterUpdate()
 	case ECharacterMovementState::Sprint_State:
 		CharacterMaxMovementSpeed = MovementInfo.SprintSpeed;
 		break;
+	case ECharacterMovementState::AimWalk_State:
+		CharacterMaxMovementSpeed = MovementInfo.AimWalkSpeed;
+		break;
 	}
 	GetCharacterMovement()->MaxWalkSpeed = CharacterMaxMovementSpeed;
 }
@@ -333,15 +336,16 @@ AWeaponDefault* ATDSCharacter::GetCurrentWeapon() const
 void ATDSCharacter::InitWeapon(const FName IdWeaponName)
 {
 	const UTDSGameInstance* GI = Cast<UTDSGameInstance>(GetGameInstance());
-	FWeaponInfo WeaponInfo;
 	if (GI)
 	{
+		FWeaponInfo WeaponInfo;
 		if (GI->GetWeaponInfoByName(IdWeaponName, WeaponInfo))
 		{
 			if (WeaponInfo.WeaponClass)
 			{
-				FVector SpawnLocation = FVector(0);
-				FRotator SpawnRotation = FRotator(0);
+				UE_LOG(LogTemp, Warning, TEXT("WeaponInfo InitWeapon"));
+				const FVector SpawnLocation = FVector::ZeroVector;
+				const FRotator SpawnRotation = FRotator::ZeroRotator;
 	
 				FActorSpawnParameters SpawnParams;
 				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;

@@ -37,7 +37,7 @@ void AWeaponDefault::BeginPlay()
 void AWeaponDefault::Tick(const float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	FireTick(DeltaTime);
 	ReloadTick(DeltaTime);
 	DispersionTick(DeltaTime);
@@ -146,6 +146,7 @@ FProjectileInfo AWeaponDefault::GetProjectile()
 
 void AWeaponDefault::Fire()
 {
+	UE_LOG(LogTemp, Warning, TEXT("AWeaponDefault Fire"));
 	FireTimer = WeaponSetting.RateOfFire;
 	WeaponInfo.Round = WeaponInfo.Round - 1;
 	ChangeDispersionByShot();
@@ -161,30 +162,32 @@ void AWeaponDefault::Fire()
 		FRotator SpawnRotation = ShootLocation->GetComponentRotation();
 		FProjectileInfo ProjectileInfo;
 		ProjectileInfo = GetProjectile();
-		FVector EndLocation;
+		//FVector EndLocation;
 		for (int8 i = 0; i < NumberProjectile; i++) //Shotgun
 		{
-			EndLocation = GetFireEndLocation();
-			FVector Dir = EndLocation - SpawnLocation;
-			Dir.Normalize();
-			SpawnRotation = FMatrix(Dir, FVector(0, 0, 0), FVector(0, 0, 0), FVector::ZeroVector).Rotator();
+			//EndLocation = GetFireEndLocation();
+			// FVector Dir = EndLocation - SpawnLocation;
+			// Dir.Normalize();
+			//SpawnRotation = FMatrix(Dir, FVector(0, 1, 0), FVector(0, 0, 1), FVector::ZeroVector).Rotator();
 			if (ProjectileInfo.Projectile)
 			{
 				FActorSpawnParameters SpawnParams;
 				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 				SpawnParams.Owner = GetOwner();
 				SpawnParams.Instigator = GetInstigator();
+				SpawnParams.bDeferConstruction = true;
 				AProjectileDefault* Projectile = Cast<AProjectileDefault>(
 					GetWorld()->SpawnActor(ProjectileInfo.Projectile, &SpawnLocation, &SpawnRotation, SpawnParams));
 				if (Projectile)
 				{
 					Projectile->InitProjectile(WeaponSetting.ProjectileSetting);
+					UGameplayStatics::FinishSpawningActor(
+						Projectile, FTransform(SpawnRotation, SpawnLocation, FVector(1.0f, 1.0f, 1.0f)));
 				}
 			}
 			else
 			{
-				//ToDo Projectile null Init trace fire
-				//GetWorld()->LineTraceSingleByChannel()
+				UE_LOG(LogTemp, Warning, TEXT("Projectile is null"));
 			}
 		}
 	}

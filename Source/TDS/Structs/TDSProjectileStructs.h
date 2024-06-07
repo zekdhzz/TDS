@@ -1,11 +1,12 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/DataTable.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "TDSProjectileStructs.generated.h"
 
 USTRUCT(BlueprintType)
-struct FProjectileInfo
+struct FProjectileInfo : public FTableRowBase
 {
 	GENERATED_BODY()
 
