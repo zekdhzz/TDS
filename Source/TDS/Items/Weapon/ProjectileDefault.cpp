@@ -11,8 +11,8 @@ AProjectileDefault::AProjectileDefault()
 
 	BulletCollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Collision Sphere"));
 	BulletCollisionSphere->SetSphereRadius(16.f);
-	BulletCollisionSphere->SetCanEverAffectNavigation(false);
 	BulletCollisionSphere->bReturnMaterialOnMove = true;
+	BulletCollisionSphere->SetCanEverAffectNavigation(false);
 	RootComponent = BulletCollisionSphere;
 	
 	BulletMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Bullet Projectile Mesh"));
@@ -21,6 +21,9 @@ AProjectileDefault::AProjectileDefault()
 
 	BulletFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Bullet FX"));
 	BulletFX->SetupAttachment(RootComponent);
+
+	//BulletSound = CreateDefaultSubobject<UAudioComponent>(TEXT("Bullet Audio"));
+	//BulletSound->SetupAttachment(RootComponent);
 
 	BulletProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Bullet ProjectileMovement"));
 	BulletProjectileMovement->UpdatedComponent = RootComponent;
@@ -57,11 +60,10 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 {
 	if (OtherActor && Hit.PhysMaterial.IsValid())
 	{
-		EPhysicalSurface Surface = UGameplayStatics::GetSurfaceType(Hit);
+		const EPhysicalSurface Surface = UGameplayStatics::GetSurfaceType(Hit);
 		if (ProjectileSetting.HitDecals.Contains(Surface))
 		{
 			UMaterialInterface* Material = ProjectileSetting.HitDecals[Surface];
-
 			if (Material && OtherComp)
 			{
 				UGameplayStatics::SpawnDecalAttached(Material, FVector(20.0f), OtherComp, NAME_None, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(),EAttachLocation::KeepWorldPosition,10.0f);
@@ -82,8 +84,12 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 	}
 	UGameplayStatics::ApplyDamage(OtherActor, ProjectileSetting.ProjectileDamage, GetInstigatorController(), this, nullptr);
 	ImpactProjectile();	
+	//UGameplayStatics::ApplyRadialDamageWithFalloff()
+	//Apply damage cast to if char like bp? //OnAnyTakeDmage delegate
+	//UGameplayStatics::ApplyDamage(OtherActor, ProjectileSetting.ProjectileDamage, GetOwner()->GetInstigatorController(), GetOwner(), NULL);
+	//or custom damage by health component
+	
 }
-
 
 void AProjectileDefault::BulletCollisionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -97,4 +103,3 @@ void AProjectileDefault::ImpactProjectile()
 {
 	this->Destroy();
 }
-
