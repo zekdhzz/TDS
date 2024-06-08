@@ -9,7 +9,7 @@ AInteractableDoorTrigger::AInteractableDoorTrigger()
 	PrimaryActorTick.bCanEverTick = true;
 	
 	TriggerCapsule = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerCapsule"));
-	TriggerCapsule->SetCollisionProfileName(TEXT("Trigger"));
+	TriggerCapsule->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 	RootComponent = TriggerCapsule;
 
 	TriggerCapsule->OnComponentBeginOverlap.AddDynamic(this, &AInteractableDoorTrigger::OnOverlapBegin);

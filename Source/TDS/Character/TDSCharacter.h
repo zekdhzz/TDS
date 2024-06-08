@@ -120,6 +120,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Demo")
 	FName InitWeaponName;
+
+	UFUNCTION(BlueprintCallable)
+	void SetInitWeaponName(FString WeaponName);
 	
 	UFUNCTION(BlueprintCallable)
 	void AttackCharEvent(bool bIsFiring);

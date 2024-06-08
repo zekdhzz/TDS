@@ -13,6 +13,7 @@ AProjectileDefault::AProjectileDefault()
 	BulletCollisionSphere->SetSphereRadius(16.f);
 	BulletCollisionSphere->bReturnMaterialOnMove = true;
 	BulletCollisionSphere->SetCanEverAffectNavigation(false);
+	BulletCollisionSphere->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 	RootComponent = BulletCollisionSphere;
 	
 	BulletMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Bullet Projectile Mesh"));

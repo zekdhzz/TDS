@@ -355,6 +355,15 @@ void ATDSCharacter::RecoveryStamina()
 	}
 }
 
+void ATDSCharacter::SetInitWeaponName(FString WeaponName)
+{
+	InitWeaponName = FName(WeaponName);
+	UE_LOG(LogTemp, Warning, TEXT("Seted weapon is %s"),*WeaponName)
+	CurrentWeapon->Destroy();
+	InitWeapon(InitWeaponName);
+	UE_LOG(LogTemp, Log, TEXT("Seted weapon is %s"),*CurrentWeapon->WeaponSetting.WeaponClass->GetFName().ToString())
+}
+
 void ATDSCharacter::AttackCharEvent(const bool bIsFiring)
 {
 	if (GetCurrentWeapon())

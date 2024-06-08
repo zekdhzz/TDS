@@ -149,6 +149,7 @@ void AWeaponDefault::Fire()
 	UE_LOG(LogTemp, Warning, TEXT("AWeaponDefault Fire"));
 	FireTimer = WeaponSetting.RateOfFire;
 	WeaponInfo.Round = WeaponInfo.Round - 1;
+	UE_LOG(LogTemp, Warning, TEXT("Rounds in clip %i"), WeaponInfo.Round);
 	ChangeDispersionByShot();
 	UGameplayStatics::SpawnSoundAtLocation(GetWorld(), WeaponSetting.SoundFireWeapon,
 	                                       ShootLocation->GetComponentLocation());
@@ -318,5 +319,6 @@ void AWeaponDefault::FinishReload()
 {
 	WeaponReloading = false;
 	WeaponInfo.Round = WeaponSetting.MaxRound;
+	UE_LOG(LogTemp, Warning, TEXT("Reloaded. Rounds in clip %i"), WeaponInfo.Round);
 	OnWeaponReloadEnd.Broadcast();
 }
