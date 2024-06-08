@@ -31,7 +31,7 @@ AProjectileDefault::AProjectileDefault()
 	BulletProjectileMovement->MaxSpeed = 0.f;
 
 	BulletProjectileMovement->bRotationFollowsVelocity = true;
-	BulletProjectileMovement->bShouldBounce = false;
+	BulletProjectileMovement->bShouldBounce = true;
 }
 
 void AProjectileDefault::BeginPlay()

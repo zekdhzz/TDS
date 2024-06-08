@@ -162,13 +162,13 @@ void AWeaponDefault::Fire()
 		FRotator SpawnRotation = ShootLocation->GetComponentRotation();
 		FProjectileInfo ProjectileInfo;
 		ProjectileInfo = GetProjectile();
-		//FVector EndLocation;
+		FVector EndLocation;
 		for (int8 i = 0; i < NumberProjectile; i++) //Shotgun
 		{
-			//EndLocation = GetFireEndLocation();
-			// FVector Dir = EndLocation - SpawnLocation;
-			// Dir.Normalize();
-			//SpawnRotation = FMatrix(Dir, FVector(0, 1, 0), FVector(0, 0, 1), FVector::ZeroVector).Rotator();
+			EndLocation = GetFireEndLocation();
+			 FVector Dir = EndLocation - SpawnLocation;
+			 Dir.Normalize();
+			SpawnRotation = FMatrix(Dir, FVector(0, 0, 0), FVector(0, 0, 0), FVector::ZeroVector).Rotator();
 			if (ProjectileInfo.Projectile)
 			{
 				FActorSpawnParameters SpawnParams;

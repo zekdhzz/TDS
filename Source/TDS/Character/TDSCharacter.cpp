@@ -144,6 +144,39 @@ void ATDSCharacter::InputAttackReleased()
 	AttackCharEvent(false);
 }
 
+void ATDSCharacter::SetWeaponDisplacement(const FVector_NetQuantize Location) const
+{
+	if (CurrentWeapon)
+	{
+		FVector Displacement = FVector(0);
+		switch (MovementState)
+		{
+		case ECharacterMovementState::Aim_State:
+			Displacement = FVector(0.0f, 0.0f, 160.0f);
+			CurrentWeapon->ShouldReduceDispersion = true;
+			break;
+		case ECharacterMovementState::AimWalk_State:
+			CurrentWeapon->ShouldReduceDispersion = true;
+			Displacement = FVector(0.0f, 0.0f, 160.0f);
+			break;
+		case ECharacterMovementState::Walk_State:
+			Displacement = FVector(0.0f, 0.0f, 120.0f);
+			CurrentWeapon->ShouldReduceDispersion = false;
+			break;
+		case ECharacterMovementState::Run_State:
+			Displacement = FVector(0.0f, 0.0f, 120.0f);
+			CurrentWeapon->ShouldReduceDispersion = false;
+			break;
+		case ECharacterMovementState::Sprint_State:
+			break;
+		default:
+			break;
+		}
+		CurrentWeapon->ShootEndLocation = Location + Displacement;
+		//aim cursor like 3d Widget?
+	}
+}
+
 void ATDSCharacter::MovementTick()
 {
 	//check if forward vector equals input vector
@@ -189,6 +222,8 @@ void ATDSCharacter::MovementTick()
 				0.0f,
 				UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), HitResult.Location).Yaw,
 				0.0f));
+
+			SetWeaponDisplacement(HitResult.Location);
 		}
 		else
 		{
@@ -202,6 +237,7 @@ void ATDSCharacter::MovementTick()
 				UKismetMathLibrary::FindLookAtRotation(
 					GetActorLocation(), FVector(MousePosition.X, MousePosition.Y, GetActorLocation().Z)).Yaw,
 				0.0f));
+			SetWeaponDisplacement(FVector(MousePosition.X, MousePosition.Y, GetActorLocation().Z));
 		}
 	}
 }

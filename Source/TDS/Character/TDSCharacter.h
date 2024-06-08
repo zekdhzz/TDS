@@ -80,7 +80,7 @@ public:
 	void InputAttackPressed();
 	UFUNCTION()
 	void InputAttackReleased();
-	
+
 	UFUNCTION()
 	void MovementTick();
 	UFUNCTION(BlueprintCallable)
@@ -138,7 +138,8 @@ public:
 	void WeaponReloadStart_BP(UAnimMontage* Anim);
 	UFUNCTION(BlueprintNativeEvent)
 	void WeaponReloadEnd_BP();
-	
+	void SetWeaponDisplacement(FVector_NetQuantize Location) const;
+
 	//for debug
 	void PrintState() const;
 };

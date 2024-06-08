@@ -13,7 +13,7 @@ ASpawnableParticle::ASpawnableParticle()
 	PrimaryActorTick.bCanEverTick = true;
 
 	CollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionSphere"));
-	CollisionSphere->SetCollisionProfileName(TEXT("Trigger"));
+	CollisionSphere->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 	CollisionSphere->SetSphereRadius(SphereRadius);
 	SetRootComponent(CollisionSphere);
 	CollisionSphere->SetHiddenInGame(false);
