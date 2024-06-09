@@ -8,25 +8,22 @@ UCLASS()
 class TDS_API AProjectileDefault_Grenade : public AProjectileDefault
 {
 	GENERATED_BODY()
-	
+
+public:
+	AProjectileDefault_Grenade();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	void TimerExplose(float DeltaTime);
-
-	virtual void BulletCollisionSphereHit(class UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
-	
+	void Explode();
+	void TimerExplode(float DeltaTime);
 	virtual void ImpactProjectile() override;
-
-	void Explose();
-
+	virtual void BulletCollisionSphereHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+	                                      UPrimitiveComponent* OtherComp, FVector NormalImpulse,
+	                                      const FHitResult& Hit) override;
 	bool TimerEnabled = false;
-	float TimerToExplose = 0.0f;
-	float TimeToExplose = 5.0f;
+	float TimerToExplode = 0.0f;
+	float TimeToExplode = 5.0f;
 };

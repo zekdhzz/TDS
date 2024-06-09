@@ -1,69 +1,76 @@
 ﻿#include "ProjectileDefault_Grenade.h"
+
+#include "DrawDebugHelpers.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+
+AProjectileDefault_Grenade::AProjectileDefault_Grenade()
+{
+	BulletProjectileMovement->bShouldBounce = true;
+}
 
 void AProjectileDefault_Grenade::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-void AProjectileDefault_Grenade::Tick(float DeltaTime)
+void AProjectileDefault_Grenade::Tick(const float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	TimerExplose(DeltaTime);
-
-
+	TimerExplode(DeltaTime);
 }
 
-void AProjectileDefault_Grenade::TimerExplose(float DeltaTime)
+void AProjectileDefault_Grenade::TimerExplode(const float DeltaTime)
 {
 	if (TimerEnabled)
 	{
-		if (TimerToExplose > TimeToExplose)
+		if (TimerToExplode > TimeToExplode)
 		{
-			//Explose
-			Explose();
-			
+			Explode();
 		}
 		else
 		{
-			TimerToExplose += DeltaTime;
+			TimerToExplode += DeltaTime;
 		}
 	}
 }
 
-void AProjectileDefault_Grenade::BulletCollisionSphereHit(class UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void AProjectileDefault_Grenade::BulletCollisionSphereHit(class UPrimitiveComponent* HitComp, AActor* OtherActor,
+                                                          UPrimitiveComponent* OtherComp, const FVector NormalImpulse,
+                                                          const FHitResult& Hit)
 {
 	Super::BulletCollisionSphereHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
 }
 
 void AProjectileDefault_Grenade::ImpactProjectile()
 {
-	//Init Grenade
 	TimerEnabled = true;
 }
 
-void AProjectileDefault_Grenade::Explose()
+void AProjectileDefault_Grenade::Explode()
 {
 	TimerEnabled = false;
-	if (ProjectileSetting.ExploseFX)
+	if (ProjectileSetting.ExplodeFX)
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ProjectileSetting.ExploseFX, GetActorLocation(), GetActorRotation(), FVector(1.0f));
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ProjectileSetting.ExplodeFX, GetActorLocation(),
+		                                         GetActorRotation(), FVector(1.0f));
 	}
-	if (ProjectileSetting.ExploseSound)
+	if (ProjectileSetting.ExplodeSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.ExploseSound, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.ExplodeSound, GetActorLocation());
 	}
-	
-	TArray<AActor*> IgnoredActor;
-	UGameplayStatics::ApplyRadialDamageWithFalloff(GetWorld(),
-		ProjectileSetting.ExploseMaxDamage,
-		ProjectileSetting.ExploseMaxDamage*0.2f,
-		GetActorLocation(),
-		1000.0f,
-		2000.0f,
-		5,
-		NULL, IgnoredActor,nullptr,nullptr);
+
+	if (ShowDebug)
+	{
+		DrawDebugSphere(GetWorld(), GetActorLocation(), ProjectileSetting.ProjectileMinRadiusDamage, 12, FColor::Green,
+		                false, 12.0f);
+		DrawDebugSphere(GetWorld(), GetActorLocation(), ProjectileSetting.ProjectileMaxRadiusDamage, 12, FColor::Red,
+		                false, 12.0f);
+	}
+
+	// UGameplayStatics::ApplyRadialDamageWithFalloff(GetWorld(), ProjectileSetting.ExplodeMaxDamage,
+	//                                                ProjectileSetting.ExplodeMaxDamage * 0.2f, GetActorLocation(),
+	//                                                1000.0f, 2000.0f, 5, nullptr, TArray<AActor*>(), nullptr, nullptr);
 
 	this->Destroy();
 }

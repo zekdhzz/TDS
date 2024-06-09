@@ -150,6 +150,11 @@ public:
 	void WeaponFireStart_BP(UAnimMontage* Anim);
 	void SetWeaponDisplacement(FVector_NetQuantize Location) const;
 
+	UFUNCTION(BlueprintCallable)
+	void SetWeaponDebugState(bool State) const;
+	UFUNCTION(BlueprintCallable)
+	bool GetWeaponDebugState() const;
+	
 	//for debug
 	void PrintState() const;
 };

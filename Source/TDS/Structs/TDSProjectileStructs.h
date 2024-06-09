@@ -12,13 +12,25 @@ struct FProjectileInfo : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
 	TSubclassOf<class AProjectileDefault> Projectile = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	UStaticMesh* ProjectileStaticMesh = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	FTransform ProjectileStaticMeshOffset = FTransform();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	UParticleSystem* ProjectileTrailFx = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	FTransform ProjectileTrailFxOffset = FTransform();
+
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
 	float ProjectileDamage = 20.0f;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
 	float ProjectileLifeTime = 20.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
 	float ProjectileInitSpeed = 2000.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
+	float ProjectileMaxSpeed = 2000.0f;
 
 	//material to decal on hit
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
@@ -31,14 +43,17 @@ struct FProjectileInfo : public FTableRowBase
 	TMap<TEnumAsByte<EPhysicalSurface>, UParticleSystem*> HitFXs;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
-	UParticleSystem* ExploseFX = nullptr;
+	UParticleSystem* ExplodeFX = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
-	USoundBase* ExploseSound = nullptr;
+	USoundBase* ExplodeSound = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
 	float ProjectileMaxRadiusDamage = 200.0f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
-	float ExploseMaxDamage = 40.0f;
-	//Timer add
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Explode")
+	float ProjectileMinRadiusDamage = 200.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Explode")
+	float ExplodeMaxDamage = 40.0f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Explode")
+	float ExplodeFalloffCoeff = 1.0f;
 };
 
 UCLASS()

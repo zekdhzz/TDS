@@ -189,6 +189,16 @@ void ATDSCharacter::SetWeaponDisplacement(const FVector_NetQuantize Location) co
 	}
 }
 
+void ATDSCharacter::SetWeaponDebugState(const bool State) const
+{
+	CurrentWeapon->SetDebugState(State);
+}
+
+bool ATDSCharacter::GetWeaponDebugState() const
+{
+	return CurrentWeapon->GetDebugState();
+}
+
 void ATDSCharacter::MovementTick()
 {
 	//check if forward vector equals input vector

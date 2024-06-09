@@ -28,9 +28,13 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	bool ShowDebug = false;
+	
 	virtual void Tick(float DeltaTime) override;
-
-	void InitProjectile(const FProjectileInfo& InitParam);
+	void InitProjectile(const FProjectileInfo& InitParam, bool IsDebugMode);
+	
+	UFUNCTION()
+	virtual void ImpactProjectile();
 	UFUNCTION()
 	virtual void BulletCollisionSphereHit(class UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 	UFUNCTION()
@@ -38,6 +42,4 @@ public:
 	UFUNCTION()
 	void BulletCollisionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	UFUNCTION()
-	virtual void ImpactProjectile();
 };

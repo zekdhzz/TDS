@@ -23,9 +23,6 @@ AProjectileDefault::AProjectileDefault()
 	BulletFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Bullet FX"));
 	BulletFX->SetupAttachment(RootComponent);
 
-	//BulletSound = CreateDefaultSubobject<UAudioComponent>(TEXT("Bullet Audio"));
-	//BulletSound->SetupAttachment(RootComponent);
-
 	BulletProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Bullet ProjectileMovement"));
 	BulletProjectileMovement->UpdatedComponent = RootComponent;
 	BulletProjectileMovement->InitialSpeed = 1.f;
@@ -49,12 +46,13 @@ void AProjectileDefault::Tick(const float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void AProjectileDefault::InitProjectile(const FProjectileInfo& InitParam)
+void AProjectileDefault::InitProjectile(const FProjectileInfo& InitParam, const bool IsDebugMode)
 {
 	BulletProjectileMovement->InitialSpeed = InitParam.ProjectileInitSpeed;
 	BulletProjectileMovement->MaxSpeed = InitParam.ProjectileInitSpeed;
 	this->SetLifeSpan(InitParam.ProjectileLifeTime);
 	ProjectileSetting = InitParam;
+	ShowDebug = IsDebugMode;
 }
 
 void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
