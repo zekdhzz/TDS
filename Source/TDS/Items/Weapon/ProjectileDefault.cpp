@@ -15,7 +15,7 @@ AProjectileDefault::AProjectileDefault()
 	BulletCollisionSphere->SetCanEverAffectNavigation(false);
 	BulletCollisionSphere->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 	RootComponent = BulletCollisionSphere;
-	
+
 	BulletMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Bullet Projectile Mesh"));
 	BulletMesh->SetupAttachment(RootComponent);
 	BulletMesh->SetCanEverAffectNavigation(false);
@@ -39,7 +39,8 @@ void AProjectileDefault::BeginPlay()
 {
 	Super::BeginPlay();
 	BulletCollisionSphere->OnComponentHit.AddDynamic(this, &AProjectileDefault::BulletCollisionSphereHit);
-	BulletCollisionSphere->OnComponentBeginOverlap.AddDynamic(this, &AProjectileDefault::BulletCollisionSphereBeginOverlap);
+	BulletCollisionSphere->OnComponentBeginOverlap.AddDynamic(
+		this, &AProjectileDefault::BulletCollisionSphereBeginOverlap);
 	BulletCollisionSphere->OnComponentEndOverlap.AddDynamic(this, &AProjectileDefault::BulletCollisionSphereEndOverlap);
 }
 
@@ -56,7 +57,9 @@ void AProjectileDefault::InitProjectile(const FProjectileInfo& InitParam)
 	ProjectileSetting = InitParam;
 }
 
-void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, AActor* OtherActor,
+                                                  UPrimitiveComponent* OtherComp, FVector NormalImpulse,
+                                                  const FHitResult& Hit)
 {
 	if (OtherActor && Hit.PhysMaterial.IsValid())
 	{
@@ -66,7 +69,9 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 			UMaterialInterface* Material = ProjectileSetting.HitDecals[Surface];
 			if (Material && OtherComp)
 			{
-				UGameplayStatics::SpawnDecalAttached(Material, FVector(20.0f), OtherComp, NAME_None, Hit.ImpactPoint, Hit.ImpactNormal.Rotation(),EAttachLocation::KeepWorldPosition,10.0f);
+				UGameplayStatics::SpawnDecalAttached(Material, FVector(20.0f), OtherComp, NAME_None, Hit.ImpactPoint,
+				                                     Hit.ImpactNormal.Rotation(), EAttachLocation::KeepWorldPosition,
+				                                     10.0f);
 			}
 		}
 		if (ProjectileSetting.HitFXs.Contains(Surface))
@@ -74,7 +79,9 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 			UParticleSystem* ParticleSystem = ProjectileSetting.HitFXs[Surface];
 			if (ParticleSystem)
 			{
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ParticleSystem, FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint, FVector(1.0f)));
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ParticleSystem,
+				                                         FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint,
+				                                                    FVector(1.0f)));
 			}
 		}
 		if (ProjectileSetting.HitSound)
@@ -82,20 +89,23 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 			UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.HitSound, Hit.ImpactPoint);
 		}
 	}
-	UGameplayStatics::ApplyDamage(OtherActor, ProjectileSetting.ProjectileDamage, GetInstigatorController(), this, nullptr);
-	ImpactProjectile();	
+	UGameplayStatics::ApplyDamage(OtherActor, ProjectileSetting.ProjectileDamage, GetInstigatorController(), this,
+	                              nullptr);
+	ImpactProjectile();
 	//UGameplayStatics::ApplyRadialDamageWithFalloff()
 	//Apply damage cast to if char like bp? //OnAnyTakeDmage delegate
 	//UGameplayStatics::ApplyDamage(OtherActor, ProjectileSetting.ProjectileDamage, GetOwner()->GetInstigatorController(), GetOwner(), NULL);
 	//or custom damage by health component
-	
 }
 
-void AProjectileDefault::BulletCollisionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AProjectileDefault::BulletCollisionSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                                                           UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+                                                           bool bFromSweep, const FHitResult& SweepResult)
 {
 }
 
-void AProjectileDefault::BulletCollisionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void AProjectileDefault::BulletCollisionSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 }
 
