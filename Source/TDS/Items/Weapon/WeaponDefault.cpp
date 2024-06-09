@@ -124,6 +124,11 @@ void AWeaponDefault::WeaponInit()
 	UpdateStateWeapon(ECharacterMovementState::Run_State);
 }
 
+void AWeaponDefault::UpdateWeaponAimingState(const bool bIsAiming)
+{
+	WeaponAiming = bIsAiming;
+}
+
 void AWeaponDefault::SetWeaponStateFire(bool bIsFire)
 {
 	if (CheckWeaponCanFire())
@@ -146,16 +151,24 @@ FProjectileInfo AWeaponDefault::GetProjectile()
 
 void AWeaponDefault::Fire()
 {
+	UAnimMontage* AnimToPlay;
+	
+	if (WeaponAiming)
+		AnimToPlay = WeaponSetting.AnimWeaponInfo.AnimCharFireAim;
+	else
+		AnimToPlay = WeaponSetting.AnimWeaponInfo.AnimCharFire;
+	
 	UE_LOG(LogTemp, Warning, TEXT("AWeaponDefault Fire"));
 	FireTimer = WeaponSetting.RateOfFire;
 	WeaponInfo.Round = WeaponInfo.Round - 1;
+	OnWeaponFireStart.Broadcast(AnimToPlay);
 	UE_LOG(LogTemp, Warning, TEXT("Rounds in clip %i"), WeaponInfo.Round);
 	ChangeDispersionByShot();
 	UGameplayStatics::SpawnSoundAtLocation(GetWorld(), WeaponSetting.SoundFireWeapon,
 	                                       ShootLocation->GetComponentLocation());
 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), WeaponSetting.EffectFireWeapon,
 	                                         ShootLocation->GetComponentTransform());
-	int8 NumberProjectile = GetNumberProjectileByShot();
+	const int8 NumberProjectile = GetNumberProjectileByShot();
 
 	if (ShootLocation)
 	{
@@ -311,8 +324,8 @@ void AWeaponDefault::InitReload()
 	ReloadTimer = WeaponSetting.ReloadTime;
 
 	//ToDo Anim reload
-	if (WeaponSetting.AnimCharReload)
-		OnWeaponReloadStart.Broadcast(WeaponSetting.AnimCharReload);
+	if (WeaponSetting.AnimWeaponInfo.AnimCharReload)
+		OnWeaponReloadStart.Broadcast(WeaponSetting.AnimWeaponInfo.AnimCharReload);
 }
 
 void AWeaponDefault::FinishReload()

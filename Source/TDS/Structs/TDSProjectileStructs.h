@@ -25,7 +25,7 @@ struct FProjectileInfo : public FTableRowBase
 	TMap<TEnumAsByte<EPhysicalSurface>, UMaterialInterface*> HitDecals;
 	//Sound when hit
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
-	USoundBase* HitSound = nullptr;
+	TMap<TEnumAsByte<EPhysicalSurface>, USoundBase*> HitSound;
 	//fx when hit check by surface
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ProjectileSetting")
 	TMap<TEnumAsByte<EPhysicalSurface>, UParticleSystem*> HitFXs;

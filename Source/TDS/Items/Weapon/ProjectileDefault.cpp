@@ -84,9 +84,10 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 				                                                    FVector(1.0f)));
 			}
 		}
-		if (ProjectileSetting.HitSound)
+		if (ProjectileSetting.HitSound.Contains(Surface))
 		{
-			UGameplayStatics::PlaySoundAtLocation(GetWorld(), ProjectileSetting.HitSound, Hit.ImpactPoint);
+			USoundBase* HitSound = ProjectileSetting.HitSound[Surface];
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, Hit.ImpactPoint);
 		}
 	}
 	UGameplayStatics::ApplyDamage(OtherActor, ProjectileSetting.ProjectileDamage, GetInstigatorController(), this,

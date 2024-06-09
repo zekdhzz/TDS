@@ -144,6 +144,18 @@ void ATDSCharacter::InputAttackReleased()
 	AttackCharEvent(false);
 }
 
+USkeletalMeshComponent* ATDSCharacter::GetCharacterMesh() const
+{
+	USkeletalMeshComponent* MeshComponent = nullptr;
+
+	if (this->GetParentActor() != nullptr)
+	{
+		MeshComponent = Cast<USkeletalMeshComponent>(
+			this->GetParentActor()->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
+	}
+	return (MeshComponent);
+}
+
 void ATDSCharacter::SetWeaponDisplacement(const FVector_NetQuantize Location) const
 {
 	if (CurrentWeapon)
@@ -358,10 +370,10 @@ void ATDSCharacter::RecoveryStamina()
 void ATDSCharacter::SetInitWeaponName(FString WeaponName)
 {
 	InitWeaponName = FName(WeaponName);
-	UE_LOG(LogTemp, Warning, TEXT("Seted weapon is %s"),*WeaponName)
+	UE_LOG(LogTemp, Warning, TEXT("Seted weapon is %s"), *WeaponName)
 	CurrentWeapon->Destroy();
 	InitWeapon(InitWeaponName);
-	UE_LOG(LogTemp, Log, TEXT("Seted weapon is %s"),*CurrentWeapon->WeaponSetting.WeaponClass->GetFName().ToString())
+	UE_LOG(LogTemp, Log, TEXT("Seted weapon is %s"), *CurrentWeapon->WeaponSetting.WeaponClass->GetFName().ToString())
 }
 
 void ATDSCharacter::AttackCharEvent(const bool bIsFiring)
@@ -391,27 +403,30 @@ void ATDSCharacter::InitWeapon(const FName IdWeaponName)
 				UE_LOG(LogTemp, Warning, TEXT("WeaponInfo InitWeapon"));
 				const FVector SpawnLocation = FVector::ZeroVector;
 				const FRotator SpawnRotation = FRotator::ZeroRotator;
-	
+
 				FActorSpawnParameters SpawnParams;
 				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 				SpawnParams.Owner = GetOwner();
 				SpawnParams.Instigator = GetInstigator();
-	
-				AWeaponDefault* Weapon = Cast<AWeaponDefault>(GetWorld()->SpawnActor(WeaponInfo.WeaponClass, &SpawnLocation, &SpawnRotation, SpawnParams));
+
+				AWeaponDefault* Weapon = Cast<AWeaponDefault>(
+					GetWorld()->SpawnActor(WeaponInfo.WeaponClass, &SpawnLocation, &SpawnRotation, SpawnParams));
 				if (Weapon)
 				{
 					const FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
 					Weapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
 					CurrentWeapon = Weapon;
-					
+
 					Weapon->WeaponSetting = WeaponInfo;
 					Weapon->WeaponInfo.Round = WeaponInfo.MaxRound;
 					//Remove !!! Debug
 					Weapon->ReloadTime = WeaponInfo.ReloadTime;
 					Weapon->UpdateStateWeapon(MovementState);
-	
+					(MovementState == ECharacterMovementState::Aim_State || MovementState ==
+						ECharacterMovementState::AimWalk_State) ? Weapon->UpdateWeaponAimingState(true) : Weapon->UpdateWeaponAimingState(false);
 					Weapon->OnWeaponReloadStart.AddDynamic(this, &ATDSCharacter::WeaponReloadStart);
 					Weapon->OnWeaponReloadEnd.AddDynamic(this, &ATDSCharacter::WeaponReloadEnd);
+					Weapon->OnWeaponFireStart.AddDynamic(this, &ATDSCharacter::WeaponFireStart);
 				}
 			}
 		}
@@ -420,6 +435,12 @@ void ATDSCharacter::InitWeapon(const FName IdWeaponName)
 			UE_LOG(LogTemp, Warning, TEXT("ATPSCharacter::InitWeapon - Weapon not found in table -NULL"));
 		}
 	}
+}
+
+void ATDSCharacter::WeaponFireStart(UAnimMontage* Anim)
+{
+	if (CurrentWeapon)
+		WeaponFireStart_BP(Anim);
 }
 
 UDecalComponent* ATDSCharacter::GetCursorToWorld() const
@@ -453,6 +474,11 @@ void ATDSCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage* Anim)
 }
 
 void ATDSCharacter::WeaponReloadEnd_BP_Implementation()
+{
+	// in BP
+}
+
+void ATDSCharacter::WeaponFireStart_BP_Implementation(UAnimMontage* Anim)
 {
 	// in BP
 }

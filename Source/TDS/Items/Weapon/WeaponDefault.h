@@ -6,6 +6,7 @@
 #include "TDS/Structs/TDSWeaponStructs.h"
 #include "WeaponDefault.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponFireStart, UAnimMontage*, AnimFireChar);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponReloadStart,UAnimMontage*,Anim);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloadEnd);
 
@@ -18,6 +19,7 @@ public:
 	// Sets default values for this actor's properties
 	AWeaponDefault();
 
+	FOnWeaponFireStart OnWeaponFireStart;
 	FOnWeaponReloadEnd OnWeaponReloadEnd;
 	FOnWeaponReloadStart OnWeaponReloadStart;
 	
@@ -53,6 +55,9 @@ public:
 	bool WeaponFiring = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic")
 	bool WeaponReloading = false;
+
+	void UpdateWeaponAimingState(bool bIsAiming);
+	bool WeaponAiming = false;
 	
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponStateFire(bool bIsFire);
@@ -64,6 +69,7 @@ public:
 	void Fire();
 
 	void UpdateStateWeapon(ECharacterMovementState MovementState);
+	
 	void ChangeDispersionByShot();
 	float GetCurrentDispersion() const;
 	FVector ApplyDispersionToShoot(FVector DirectionShoot)const;

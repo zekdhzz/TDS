@@ -80,7 +80,10 @@ public:
 	void InputAttackPressed();
 	UFUNCTION()
 	void InputAttackReleased();
-
+	
+	UFUNCTION(BlueprintCallable)
+	USkeletalMeshComponent* GetCharacterMesh() const;
+	
 	UFUNCTION()
 	void MovementTick();
 	UFUNCTION(BlueprintCallable)
@@ -131,6 +134,8 @@ public:
 	AWeaponDefault* GetCurrentWeapon() const;
 	UFUNCTION(BlueprintCallable)
 	void InitWeapon(FName IdWeaponName);
+	UFUNCTION()
+	void WeaponFireStart(UAnimMontage* Anim);
 	UFUNCTION(BlueprintCallable)
 	void TryReloadWeapon();
 	UFUNCTION()
@@ -141,6 +146,8 @@ public:
 	void WeaponReloadStart_BP(UAnimMontage* Anim);
 	UFUNCTION(BlueprintNativeEvent)
 	void WeaponReloadEnd_BP();
+	UFUNCTION(BlueprintNativeEvent)
+	void WeaponFireStart_BP(UAnimMontage* Anim);
 	void SetWeaponDisplacement(FVector_NetQuantize Location) const;
 
 	//for debug
