@@ -47,9 +47,29 @@ void AProjectileDefault::Tick(const float DeltaTime)
 
 void AProjectileDefault::InitProjectile(const FProjectileInfo& InitParam, const bool IsDebugMode)
 {
+	this->SetLifeSpan(InitParam.ProjectileLifeTime);
 	BulletProjectileMovement->InitialSpeed = InitParam.ProjectileInitSpeed;
 	BulletProjectileMovement->MaxSpeed = InitParam.ProjectileInitSpeed;
-	this->SetLifeSpan(InitParam.ProjectileLifeTime);
+	
+	if(InitParam.ProjectileStaticMesh)
+	{
+		BulletMesh->SetStaticMesh(InitParam.ProjectileStaticMesh);
+		BulletMesh->SetRelativeTransform(InitParam.ProjectileStaticMeshOffset);
+	}
+	else
+	{
+		BulletMesh->DestroyComponent();
+	}
+	if(InitParam.ProjectileTrailFx)
+	{
+		BulletFX->SetTemplate(InitParam.ProjectileTrailFx);
+		BulletFX->SetRelativeTransform(InitParam.ProjectileTrailFxOffset);
+	}
+	else
+	{
+		BulletFX->DestroyComponent();
+	}
+	
 	ProjectileSetting = InitParam;
 	ShowDebug = IsDebugMode;
 }
