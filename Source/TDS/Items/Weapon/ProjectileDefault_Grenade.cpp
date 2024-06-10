@@ -4,10 +4,6 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
-AProjectileDefault_Grenade::AProjectileDefault_Grenade()
-{
-	BulletProjectileMovement->bShouldBounce = true;
-}
 
 void AProjectileDefault_Grenade::BeginPlay()
 {
@@ -62,9 +58,12 @@ void AProjectileDefault_Grenade::Explode()
 
 	if (ShowDebug)
 	{
-		DrawDebugSphere(GetWorld(), GetActorLocation(), ProjectileSetting.ProjectileMinRadiusDamage, 12, FColor::Green,
-		                false, 12.0f);
 		DrawDebugSphere(GetWorld(), GetActorLocation(), ProjectileSetting.ProjectileMaxRadiusDamage, 12, FColor::Red,
+		                false, 12.0f);
+		DrawDebugSphere(GetWorld(), GetActorLocation(), ProjectileSetting.ProjectileMaxRadiusDamage - 
+		                (ProjectileSetting.ProjectileMaxRadiusDamage - ProjectileSetting.ProjectileMinRadiusDamage) *
+		                0.5f, 12, FColor::Blue, false, 12.0f);
+		DrawDebugSphere(GetWorld(), GetActorLocation(), ProjectileSetting.ProjectileMinRadiusDamage, 12, FColor::Green,
 		                false, 12.0f);
 	}
 

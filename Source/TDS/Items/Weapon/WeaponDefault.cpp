@@ -49,18 +49,24 @@ void AWeaponDefault::Tick(const float DeltaTime)
 }
 
 
-void AWeaponDefault::FireTick(float DeltaTime)
+void AWeaponDefault::FireTick(const float DeltaTime)
 {
 	if (GetWeaponRound() > 0)
 	{
 		if (WeaponFiring)
+		{
 			if (FireTimer < 0.f)
 			{
 				if (!WeaponReloading)
+				{
 					Fire();
+				}
 			}
 			else
+			{
 				FireTimer -= DeltaTime;
+			}
+		}
 	}
 	else
 	{
@@ -71,7 +77,7 @@ void AWeaponDefault::FireTick(float DeltaTime)
 	}
 }
 
-void AWeaponDefault::ReloadTick(float DeltaTime)
+void AWeaponDefault::ReloadTick(const float DeltaTime)
 {
 	if (WeaponReloading)
 	{
@@ -134,13 +140,18 @@ void AWeaponDefault::UpdateWeaponAimingState(const bool bIsAiming)
 	WeaponAiming = bIsAiming;
 }
 
-void AWeaponDefault::SetWeaponStateFire(bool bIsFire)
+void AWeaponDefault::SetWeaponStateFire(const bool bIsFire)
 {
 	if (CheckWeaponCanFire())
+	{
 		WeaponFiring = bIsFire;
+	}
 	else
+	{
 		WeaponFiring = false;
-	FireTimer = 0.01f;
+		FireTimer = 0.005f;
+	}
+
 }
 
 bool AWeaponDefault::CheckWeaponCanFire() const
@@ -152,7 +163,6 @@ FProjectileInfo AWeaponDefault::GetProjectile()
 {
 	return WeaponSetting.ProjectileSetting;
 }
-
 
 void AWeaponDefault::Fire()
 {
@@ -184,7 +194,7 @@ void AWeaponDefault::Fire()
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("AWeaponDefault Fire"));
+	//UE_LOG(LogTemp, Warning, TEXT("AWeaponDefault Fire"));
 	FireTimer = WeaponSetting.RateOfFire;
 	WeaponInfo.Round = WeaponInfo.Round - 1;
 	UE_LOG(LogTemp, Warning, TEXT("Rounds in clip %i"), WeaponInfo.Round);
@@ -228,6 +238,7 @@ void AWeaponDefault::Fire()
 					UGameplayStatics::FinishSpawningActor(
 						Projectile, FTransform(SpawnRotation, SpawnLocation, FVector(1.0f, 1.0f, 1.0f)));
 				}
+				UE_LOG(LogTemp, Warning, TEXT("Projectile"));
 			}
 			else
 			{
@@ -255,19 +266,19 @@ void AWeaponDefault::Fire()
 
 					if (WeaponSetting.ProjectileSetting.HitDecals.Contains(Surface))
 					{
-						UMaterialInterface* myMaterial = WeaponSetting.ProjectileSetting.HitDecals[Surface];
+						UMaterialInterface* Material = WeaponSetting.ProjectileSetting.HitDecals[Surface];
 
-						if (myMaterial && Hit.GetComponent())
+						if (Material && Hit.GetComponent())
 						{
-							SpawnTraceHitDecal(myMaterial, Hit);
+							SpawnTraceHitDecal(Material, Hit);
 						}
 					}
 					if (WeaponSetting.ProjectileSetting.HitFXs.Contains(Surface))
 					{
-						UParticleSystem* myParticle = WeaponSetting.ProjectileSetting.HitFXs[Surface];
-						if (myParticle)
+						UParticleSystem* Particle = WeaponSetting.ProjectileSetting.HitFXs[Surface];
+						if (Particle)
 						{
-							SpawnTraceHitFX(myParticle, Hit);
+							SpawnTraceHitFX(Particle, Hit);
 						}
 					}
 					if (WeaponSetting.ProjectileSetting.HitSound.Contains(Surface))
@@ -277,11 +288,11 @@ void AWeaponDefault::Fire()
 					UGameplayStatics::ApplyPointDamage(Hit.GetActor(), WeaponSetting.ProjectileSetting.ProjectileDamage,
 					                                   Hit.TraceStart, Hit, GetInstigatorController(), this, nullptr);
 				}
+				UE_LOG(LogTemp, Warning, TEXT("Hitscan"));
 			}
 		}
 	}
 }
-
 
 void AWeaponDefault::UpdateStateWeapon(const ECharacterMovementState MovementState)
 {
@@ -416,7 +427,7 @@ void AWeaponDefault::InitReload()
 	{
 		AnimWeaponStart(AnimWeaponReload);
 	}
-	
+
 	if (WeaponSetting.ClipDropMesh.DropMesh)
 	{
 		DropClipFlag = true;
@@ -582,3 +593,8 @@ void AWeaponDefault::SpawnTraceHitSound(USoundBase* HitSound, const FHitResult& 
 	UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, HitResult.ImpactPoint);
 }
 
+void AWeaponDefault::DebugShowStatus() const
+{
+	UE_LOG(LogTemp, Warning, TEXT("WeaponAiming - %i WeaponFiring - %i WeaponReloading - %i BlockFire - %i"),
+	       WeaponAiming, WeaponFiring, WeaponReloading, BlockFire);
+}

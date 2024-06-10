@@ -10,7 +10,7 @@ class TDS_API AProjectileDefault_Grenade : public AProjectileDefault
 	GENERATED_BODY()
 
 public:
-	AProjectileDefault_Grenade();
+
 
 protected:
 	virtual void BeginPlay() override;

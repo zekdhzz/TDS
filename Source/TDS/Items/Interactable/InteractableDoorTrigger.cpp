@@ -9,7 +9,7 @@ AInteractableDoorTrigger::AInteractableDoorTrigger()
 	PrimaryActorTick.bCanEverTick = true;
 	
 	TriggerCapsule = CreateDefaultSubobject<UBoxComponent>(TEXT("TriggerCapsule"));
-	TriggerCapsule->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
+	//TriggerCapsule->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 	RootComponent = TriggerCapsule;
 
 	TriggerCapsule->OnComponentBeginOverlap.AddDynamic(this, &AInteractableDoorTrigger::OnOverlapBegin);
@@ -52,7 +52,7 @@ void AInteractableDoorTrigger::SoothingDoorTransformOpen()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("ClearTimer"));
+		//UE_LOG(LogTemp, Error, TEXT("ClearTimer"));
 		GetWorldTimerManager().ClearTimer(DoorSmoothTimerHandle);
 	}
 }
@@ -69,7 +69,7 @@ void AInteractableDoorTrigger::SoothingDoorTransformClose()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("ClearTimer"));
+		//UE_LOG(LogTemp, Error, TEXT("ClearTimer"));
 		GetWorldTimerManager().ClearTimer(DoorSmoothTimerHandle);
 	}
 }
@@ -78,7 +78,7 @@ void AInteractableDoorTrigger::OpenDoor()
 {
 	if (!DoorSmoothTimerHandle.IsValid())
 	{
-		UE_LOG(LogTemp, Error, TEXT("DoorSmoothTimerHandle !IsValid"));
+		//UE_LOG(LogTemp, Error, TEXT("DoorSmoothTimerHandle !IsValid"));
 		GetWorldTimerManager().SetTimer(DoorSmoothTimerHandle, this,
 		                                &AInteractableDoorTrigger::SoothingDoorTransformOpen,
 		                                GetWorld()->GetDeltaSeconds(), true, 0.0f);
@@ -87,11 +87,11 @@ void AInteractableDoorTrigger::OpenDoor()
 
 void AInteractableDoorTrigger::CloseDoor()
 {
-	UE_LOG(LogTemp, Error, TEXT("CloseDoor"));
+	//UE_LOG(LogTemp, Error, TEXT("CloseDoor"));
 
 	if (!DoorSmoothTimerHandle.IsValid())
 	{
-		UE_LOG(LogTemp, Error, TEXT("DoorSmoothTimerHandle !IsValid"));
+		//UE_LOG(LogTemp, Error, TEXT("DoorSmoothTimerHandle !IsValid"));
 		GetWorldTimerManager().SetTimer(DoorSmoothTimerHandle, this,
 		                                &AInteractableDoorTrigger::SoothingDoorTransformClose,
 		                                GetWorld()->GetDeltaSeconds(), true, 0.0f);
@@ -120,7 +120,7 @@ void AInteractableDoorTrigger::OnOverlapBegin(UPrimitiveComponent* OverlappedCom
                                               UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
                                               const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Error, TEXT("OnOverlapBegin"));
+	//UE_LOG(LogTemp, Error, TEXT("OnOverlapBegin"));
 	ToggleDoor();
 	if (Opening)
 	{
@@ -136,7 +136,7 @@ void AInteractableDoorTrigger::OnOverlapBegin(UPrimitiveComponent* OverlappedCom
 void AInteractableDoorTrigger::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                             UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UE_LOG(LogTemp, Error, TEXT("OnOverlapEnd"));
+	//UE_LOG(LogTemp, Error, TEXT("OnOverlapEnd"));
 	ToggleDoor();
 	if (Opening)
 	{

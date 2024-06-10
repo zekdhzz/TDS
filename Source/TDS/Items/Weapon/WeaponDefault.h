@@ -130,4 +130,6 @@ public:
 	void SpawnTraceHitFX(UParticleSystem* FxTemplate, const FHitResult& HitResult) const;
 	UFUNCTION()
 	void SpawnTraceHitSound(USoundBase* HitSound, const FHitResult& HitResult) const;
+
+	void DebugShowStatus() const;
 };

@@ -136,6 +136,7 @@ void ATDSCharacter::InputAttackPressed()
 {
 	UE_LOG(LogTemp, Warning, TEXT("InputAttackPressed"));
 	AttackCharEvent(true);
+	CurrentWeapon->DebugShowStatus();
 }
 
 void ATDSCharacter::InputAttackReleased()
@@ -380,7 +381,7 @@ void ATDSCharacter::RecoveryStamina()
 void ATDSCharacter::SetInitWeaponName(FString WeaponName)
 {
 	InitWeaponName = FName(WeaponName);
-	UE_LOG(LogTemp, Warning, TEXT("Seted weapon is %s"), *WeaponName)
+	UE_LOG(LogTemp, Warning, TEXT("In BP chosen weapon is %s"), *WeaponName)
 	CurrentWeapon->Destroy();
 	InitWeapon(InitWeaponName);
 	UE_LOG(LogTemp, Log, TEXT("Seted weapon is %s"), *CurrentWeapon->WeaponSetting.WeaponClass->GetFName().ToString())
@@ -392,7 +393,10 @@ void ATDSCharacter::AttackCharEvent(const bool bIsFiring)
 	{
 		GetCurrentWeapon()->SetWeaponStateFire(bIsFiring);
 	}
-	else UE_LOG(LogTemp, Warning, TEXT("ATPSCharacter::AttackCharEvent - CurrentWeapon -NULL"));
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ATPSCharacter::AttackCharEvent - CurrentWeapon -NULL"));
+	}
 }
 
 AWeaponDefault* ATDSCharacter::GetCurrentWeapon() const
@@ -410,7 +414,6 @@ void ATDSCharacter::InitWeapon(const FName IdWeaponName)
 		{
 			if (WeaponInfo.WeaponClass)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("WeaponInfo InitWeapon"));
 				const FVector SpawnLocation = FVector::ZeroVector;
 				const FRotator SpawnRotation = FRotator::ZeroRotator;
 
@@ -426,14 +429,14 @@ void ATDSCharacter::InitWeapon(const FName IdWeaponName)
 					const FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
 					Weapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
 					CurrentWeapon = Weapon;
-
 					Weapon->WeaponSetting = WeaponInfo;
 					Weapon->WeaponInfo.Round = WeaponInfo.MaxRound;
-					//Remove !!! Debug
 					Weapon->ReloadTime = WeaponInfo.ReloadTime;
 					Weapon->UpdateStateWeapon(MovementState);
 					(MovementState == ECharacterMovementState::Aim_State || MovementState ==
-						ECharacterMovementState::AimWalk_State) ? Weapon->UpdateWeaponAimingState(true) : Weapon->UpdateWeaponAimingState(false);
+						ECharacterMovementState::AimWalk_State)
+						? Weapon->UpdateWeaponAimingState(true)
+						: Weapon->UpdateWeaponAimingState(false);
 					Weapon->OnWeaponReloadStart.AddDynamic(this, &ATDSCharacter::WeaponReloadStart);
 					Weapon->OnWeaponReloadEnd.AddDynamic(this, &ATDSCharacter::WeaponReloadEnd);
 					Weapon->OnWeaponFireStart.AddDynamic(this, &ATDSCharacter::WeaponFireStart);
@@ -442,7 +445,8 @@ void ATDSCharacter::InitWeapon(const FName IdWeaponName)
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("ATPSCharacter::InitWeapon - Weapon not found in table -NULL"));
+			UE_LOG(LogTemp, Warning,
+			       TEXT("ATPSCharacter::InitWeapon - Weapon not found in table, set weapon or check spelling"));
 		}
 	}
 }

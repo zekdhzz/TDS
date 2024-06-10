@@ -13,7 +13,7 @@ AProjectileDefault::AProjectileDefault()
 	BulletCollisionSphere->SetSphereRadius(16.f);
 	BulletCollisionSphere->bReturnMaterialOnMove = true;
 	BulletCollisionSphere->SetCanEverAffectNavigation(false);
-	BulletCollisionSphere->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
+	//BulletCollisionSphere->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 	RootComponent = BulletCollisionSphere;
 
 	BulletMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Bullet Projectile Mesh"));
@@ -27,7 +27,6 @@ AProjectileDefault::AProjectileDefault()
 	BulletProjectileMovement->UpdatedComponent = RootComponent;
 	BulletProjectileMovement->InitialSpeed = 1.f;
 	BulletProjectileMovement->MaxSpeed = 0.f;
-
 	BulletProjectileMovement->bRotationFollowsVelocity = true;
 	BulletProjectileMovement->bShouldBounce = true;
 }
@@ -67,9 +66,11 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 			UMaterialInterface* Material = ProjectileSetting.HitDecals[Surface];
 			if (Material && OtherComp)
 			{
+				
 				UGameplayStatics::SpawnDecalAttached(Material, FVector(20.0f), OtherComp, NAME_None, Hit.ImpactPoint,
 				                                     Hit.ImpactNormal.Rotation(), EAttachLocation::KeepWorldPosition,
 				                                     10.0f);
+				//UE_LOG(LogTemp, Warning, TEXT("Material %s"), *Material->GetName());
 			}
 		}
 		if (ProjectileSetting.HitFXs.Contains(Surface))
@@ -80,12 +81,14 @@ void AProjectileDefault::BulletCollisionSphereHit(UPrimitiveComponent* HitComp, 
 				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ParticleSystem,
 				                                         FTransform(Hit.ImpactNormal.Rotation(), Hit.ImpactPoint,
 				                                                    FVector(1.0f)));
+				//UE_LOG(LogTemp, Warning, TEXT("Material %s"), *ParticleSystem->GetName());
 			}
 		}
 		if (ProjectileSetting.HitSound.Contains(Surface))
 		{
 			USoundBase* HitSound = ProjectileSetting.HitSound[Surface];
 			UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, Hit.ImpactPoint);
+			//UE_LOG(LogTemp, Warning, TEXT("Material %s"), *HitSound->GetName());
 		}
 	}
 	UGameplayStatics::ApplyDamage(OtherActor, ProjectileSetting.ProjectileDamage, GetInstigatorController(), this,

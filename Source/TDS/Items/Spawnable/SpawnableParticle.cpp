@@ -43,12 +43,12 @@ void ASpawnableParticle::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent
                                         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
                                         const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Error, TEXT("OnOverlapBegin"));
+	//UE_LOG(LogTemp, Error, TEXT("OnOverlapBegin"));
 	IsLoop = true;
 
 	if (!VfxSpawnTimerHandle.IsValid())
 	{
-		UE_LOG(LogTemp, Error, TEXT("VFXSpawnTimerHandle !IsValid"));
+		//UE_LOG(LogTemp, Error, TEXT("VFXSpawnTimerHandle !IsValid"));
 		GetWorldTimerManager().SetTimer(VfxSpawnTimerHandle, this,
 		                                &ASpawnableParticle::SpawnParticle,
 		                                SpawnRate, true, 0.0f);
@@ -60,7 +60,7 @@ void ASpawnableParticle::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 {
 	IsLoop = false;
 
-	UE_LOG(LogTemp, Error, TEXT("OnOverlapEnd"));
+	//UE_LOG(LogTemp, Error, TEXT("OnOverlapEnd"));
 }
 
 void ASpawnableParticle::SpawnParticle()
@@ -68,7 +68,7 @@ void ASpawnableParticle::SpawnParticle()
 	if (IsLoop)
 	{
 		Vfx->ActivateSystem();
-		UE_LOG(LogTemp, Error, TEXT("IsLoop"));
+		//UE_LOG(LogTemp, Error, TEXT("IsLoop"));
 		ATDSCharacter* CurrentPawn = Cast<ATDSCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), Sound,

@@ -14,7 +14,7 @@ bool UTDSGameInstance::GetWeaponInfoByName(const FName NameWeapon, FWeaponInfo& 
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UTPSGameInstance::GetWeaponInfoByName - WeaponTable -NULL"));
+		UE_LOG(LogTemp, Warning, TEXT("WeaponInfoTable not setted in GameMode"));
 	}
 	return bIsFind;
 }
