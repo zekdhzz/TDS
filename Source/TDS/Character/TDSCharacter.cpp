@@ -8,11 +8,12 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
+#include "TDS/Game/TDSGameInstance.h"
+#include "TDS/Items/Weapon/WeaponDefault.h"
 
 ATDSCharacter::ATDSCharacter()
 {
@@ -43,18 +44,6 @@ ATDSCharacter::ATDSCharacter()
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
-	// Create a decal in the world to show the cursor's location
-	CursorToWorld = CreateDefaultSubobject<UDecalComponent>("CursorToWorld");
-	CursorToWorld->SetupAttachment(RootComponent);
-	static ConstructorHelpers::FObjectFinder<UMaterial> DecalMaterialAsset(
-		TEXT("Material'/Game/Enviroment/Assets/M_Cursor_Decal.M_Cursor_Decal'"));
-	if (DecalMaterialAsset.Succeeded())
-	{
-		CursorToWorld->SetDecalMaterial(DecalMaterialAsset.Object);
-	}
-	CursorToWorld->DecalSize = FVector(16.0f, 32.0f, 32.0f);
-	CursorToWorld->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f).Quaternion());
-
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
@@ -63,34 +52,32 @@ ATDSCharacter::ATDSCharacter()
 	CharacterMaxMovementSpeed = MovementInfo.RunSpeed;
 }
 
-void ATDSCharacter::Tick(float DeltaSeconds)
+void ATDSCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	InitWeapon(InitWeaponName);
+
+	if (CursorMaterial)
+	{
+		CurrentCursor = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), CursorMaterial, CursorSize, FVector(0));
+	}
+}
+
+void ATDSCharacter::Tick(const float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (CursorToWorld != nullptr)
+	if (CurrentCursor)
 	{
-		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
-		{
-			if (UWorld* World = GetWorld())
-			{
-				FHitResult HitResult;
-				FCollisionQueryParams Params(NAME_None, FCollisionQueryParams::GetUnknownStatId());
-				FVector StartLocation = TopDownCameraComponent->GetComponentLocation();
-				FVector EndLocation = TopDownCameraComponent->GetComponentRotation().Vector() * 2000.0f;
-				Params.AddIgnoredActor(this);
-				World->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, Params);
-				FQuat SurfaceRotation = HitResult.ImpactNormal.ToOrientationRotator().Quaternion();
-				CursorToWorld->SetWorldLocationAndRotation(HitResult.Location, SurfaceRotation);
-			}
-		}
-		else if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		if (const APlayerController* PC = Cast<APlayerController>(GetController()))
 		{
 			FHitResult TraceHitResult;
 			PC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
-			FVector CursorFV = TraceHitResult.ImpactNormal;
-			FRotator CursorR = CursorFV.Rotation();
-			CursorToWorld->SetWorldLocation(TraceHitResult.Location);
-			CursorToWorld->SetWorldRotation(CursorR);
+			const FVector CursorFV = TraceHitResult.ImpactNormal;
+			const FRotator CursorR = CursorFV.Rotation();
+			CurrentCursor->SetWorldLocation(TraceHitResult.Location);
+			CurrentCursor->SetWorldRotation(CursorR);
 		}
 	}
 	MovementTick();
@@ -109,6 +96,9 @@ void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ATDSCharacter::CharacterRun);
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ATDSCharacter::CharacterAim);
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ATDSCharacter::CharacterRun);
+	PlayerInputComponent->BindAction("FireEvent", IE_Pressed, this, &ATDSCharacter::InputAttackPressed);
+	PlayerInputComponent->BindAction("FireEvent", IE_Released, this, &ATDSCharacter::InputAttackReleased);
+	PlayerInputComponent->BindAction("ReloadEvent", IE_Released, this, &ATDSCharacter::TryReloadWeapon);
 }
 
 void ATDSCharacter::InputAxisX(const float Value)
@@ -142,6 +132,74 @@ void ATDSCharacter::InputAxisY(const float Value)
 	}
 }
 
+void ATDSCharacter::InputAttackPressed()
+{
+	UE_LOG(LogTemp, Warning, TEXT("InputAttackPressed"));
+	AttackCharEvent(true);
+	CurrentWeapon->DebugShowStatus();
+}
+
+void ATDSCharacter::InputAttackReleased()
+{
+	UE_LOG(LogTemp, Warning, TEXT("InputAttackReleased"));
+	AttackCharEvent(false);
+}
+
+USkeletalMeshComponent* ATDSCharacter::GetCharacterMesh() const
+{
+	USkeletalMeshComponent* MeshComponent = nullptr;
+
+	if (this->GetParentActor() != nullptr)
+	{
+		MeshComponent = Cast<USkeletalMeshComponent>(
+			this->GetParentActor()->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
+	}
+	return (MeshComponent);
+}
+
+void ATDSCharacter::SetWeaponDisplacement(const FVector_NetQuantize Location) const
+{
+	if (CurrentWeapon)
+	{
+		FVector Displacement = FVector(0);
+		switch (MovementState)
+		{
+		case ECharacterMovementState::Aim_State:
+			Displacement = FVector(0.0f, 0.0f, 160.0f);
+			CurrentWeapon->ShouldReduceDispersion = true;
+			break;
+		case ECharacterMovementState::AimWalk_State:
+			CurrentWeapon->ShouldReduceDispersion = true;
+			Displacement = FVector(0.0f, 0.0f, 160.0f);
+			break;
+		case ECharacterMovementState::Walk_State:
+			Displacement = FVector(0.0f, 0.0f, 120.0f);
+			CurrentWeapon->ShouldReduceDispersion = false;
+			break;
+		case ECharacterMovementState::Run_State:
+			Displacement = FVector(0.0f, 0.0f, 120.0f);
+			CurrentWeapon->ShouldReduceDispersion = false;
+			break;
+		case ECharacterMovementState::Sprint_State:
+			break;
+		default:
+			break;
+		}
+		CurrentWeapon->ShootEndLocation = Location + Displacement;
+		//aim cursor like 3d Widget?
+	}
+}
+
+void ATDSCharacter::SetWeaponDebugState(const bool State) const
+{
+	CurrentWeapon->SetDebugState(State);
+}
+
+bool ATDSCharacter::GetWeaponDebugState() const
+{
+	return CurrentWeapon->GetDebugState();
+}
+
 void ATDSCharacter::MovementTick()
 {
 	//check if forward vector equals input vector
@@ -150,27 +208,18 @@ void ATDSCharacter::MovementTick()
 			? IsMovingInDirectionToInput = true
 			: IsMovingInDirectionToInput = false;
 
-	// GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow,
-	//                                  FString::Printf(
-	// 	                                 TEXT("IsMovingInDirectionToInput: %d"), IsMovingInDirectionToInput));
-
-
 	if (IsSprinting && !IsMovingInDirectionToInput)
 	{
 		//if not running forward
-		ChangeMovementState(EMovementState::Run_State);
+		ChangeMovementState(ECharacterMovementState::Run_State);
 	}
 	else if (IsSprinting && IsMovingInDirectionToInput)
 	{
-		// GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Yellow,
-		//                                  FString::Printf(TEXT("SPRINTING")));
 		// if running forward
 		if (!IsStaminaRecovering && !FMath::IsNearlyEqual(Stamina, 0.0f, 0.5f))
 		{
 			Stamina = FMath::Max(0.0f, Stamina - SpendStaminaPerTick);
-			ChangeMovementState(EMovementState::Sprint_State);
-			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
-			//                                  FString::Printf(TEXT("Stamina: %f"), Stamina));
+			ChangeMovementState(ECharacterMovementState::Sprint_State);
 			if (!StaminaRecoveryTimerHandle.IsValid() && FMath::IsNearlyEqual(Stamina, 0.0f, 0.5f))
 			{
 				GetWorldTimerManager().SetTimer(StaminaRecoveryTimerHandle, this, &ATDSCharacter::RecoveryStamina,
@@ -179,14 +228,9 @@ void ATDSCharacter::MovementTick()
 		}
 		else
 		{
-			ChangeMovementState(EMovementState::Run_State);
+			ChangeMovementState(ECharacterMovementState::Run_State);
 		}
 	}
-
-	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
-	//                                  FString::Printf(TEXT("speed: %f"), CharacterMaxMovementSpeed));
-	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
-	//                                  FString::Printf(TEXT("speed: %hhd"), MovementState));
 
 	const APlayerController* MyController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (MyController)
@@ -201,6 +245,8 @@ void ATDSCharacter::MovementTick()
 				0.0f,
 				UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), HitResult.Location).Yaw,
 				0.0f));
+
+			SetWeaponDisplacement(HitResult.Location);
 		}
 		else
 		{
@@ -214,6 +260,7 @@ void ATDSCharacter::MovementTick()
 				UKismetMathLibrary::FindLookAtRotation(
 					GetActorLocation(), FVector(MousePosition.X, MousePosition.Y, GetActorLocation().Z)).Yaw,
 				0.0f));
+			SetWeaponDisplacement(FVector(MousePosition.X, MousePosition.Y, GetActorLocation().Z));
 		}
 	}
 }
@@ -222,23 +269,26 @@ void ATDSCharacter::CharacterUpdate()
 {
 	switch (MovementState)
 	{
-	case EMovementState::Run_State:
+	case ECharacterMovementState::Run_State:
 		CharacterMaxMovementSpeed = MovementInfo.RunSpeed;
 		break;
-	case EMovementState::Aim_State:
+	case ECharacterMovementState::Aim_State:
 		CharacterMaxMovementSpeed = MovementInfo.AimSpeed;
 		break;
-	case EMovementState::Walk_State:
+	case ECharacterMovementState::Walk_State:
 		CharacterMaxMovementSpeed = MovementInfo.WalkSpeed;
 		break;
-	case EMovementState::Sprint_State:
+	case ECharacterMovementState::Sprint_State:
 		CharacterMaxMovementSpeed = MovementInfo.SprintSpeed;
+		break;
+	case ECharacterMovementState::AimWalk_State:
+		CharacterMaxMovementSpeed = MovementInfo.AimWalkSpeed;
 		break;
 	}
 	GetCharacterMovement()->MaxWalkSpeed = CharacterMaxMovementSpeed;
 }
 
-void ATDSCharacter::ChangeMovementState(const EMovementState NewMovementState)
+void ATDSCharacter::ChangeMovementState(const ECharacterMovementState NewMovementState)
 {
 	MovementState = NewMovementState;
 	CharacterUpdate();
@@ -277,7 +327,7 @@ void ATDSCharacter::CharacterAim()
 {
 	IsAiming = true;
 	IsWalking = IsRunning = IsSprinting = false;
-	ChangeMovementState(EMovementState::Aim_State);
+	ChangeMovementState(ECharacterMovementState::Aim_State);
 	//PrintState();
 }
 
@@ -285,7 +335,7 @@ void ATDSCharacter::CharacterWalk()
 {
 	IsWalking = true;
 	IsAiming = IsRunning = IsSprinting = false;
-	ChangeMovementState(EMovementState::Walk_State);
+	ChangeMovementState(ECharacterMovementState::Walk_State);
 	//PrintState();
 }
 
@@ -293,7 +343,7 @@ void ATDSCharacter::CharacterRun()
 {
 	IsRunning = true;
 	IsAiming = IsWalking = IsSprinting = false;
-	ChangeMovementState(EMovementState::Run_State);
+	ChangeMovementState(ECharacterMovementState::Run_State);
 	//PrintState();
 }
 
@@ -301,7 +351,7 @@ void ATDSCharacter::CharacterSprint()
 {
 	IsSprinting = true;
 	IsAiming = IsWalking = IsRunning = false;
-	ChangeMovementState(EMovementState::Sprint_State);
+	ChangeMovementState(ECharacterMovementState::Sprint_State);
 	//PrintState();
 }
 
@@ -313,7 +363,7 @@ void ATDSCharacter::PrintState() const
 
 void ATDSCharacter::RecoveryStamina()
 {
-	ChangeMovementState(EMovementState::Run_State);
+	ChangeMovementState(ECharacterMovementState::Run_State);
 	Stamina = FMath::Min(MaxStamina, Stamina + RecoveryStaminaPerTick);
 	IsStaminaRecovering = true;
 	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow,
@@ -326,4 +376,123 @@ void ATDSCharacter::RecoveryStamina()
 		//                                  FString::Printf(TEXT("Stamina recovery finished")));
 		GetWorldTimerManager().ClearTimer(StaminaRecoveryTimerHandle);
 	}
+}
+
+void ATDSCharacter::SetInitWeaponName(FString WeaponName)
+{
+	InitWeaponName = FName(WeaponName);
+	UE_LOG(LogTemp, Warning, TEXT("In BP chosen weapon is %s"), *WeaponName)
+	CurrentWeapon->Destroy();
+	InitWeapon(InitWeaponName);
+	UE_LOG(LogTemp, Log, TEXT("Seted weapon is %s"), *CurrentWeapon->WeaponSetting.WeaponClass->GetFName().ToString())
+}
+
+void ATDSCharacter::AttackCharEvent(const bool bIsFiring)
+{
+	if (GetCurrentWeapon())
+	{
+		GetCurrentWeapon()->SetWeaponStateFire(bIsFiring);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ATPSCharacter::AttackCharEvent - CurrentWeapon -NULL"));
+	}
+}
+
+AWeaponDefault* ATDSCharacter::GetCurrentWeapon() const
+{
+	return CurrentWeapon;
+}
+
+void ATDSCharacter::InitWeapon(const FName IdWeaponName)
+{
+	const UTDSGameInstance* GI = Cast<UTDSGameInstance>(GetGameInstance());
+	if (GI)
+	{
+		FWeaponInfo WeaponInfo;
+		if (GI->GetWeaponInfoByName(IdWeaponName, WeaponInfo))
+		{
+			if (WeaponInfo.WeaponClass)
+			{
+				const FVector SpawnLocation = FVector::ZeroVector;
+				const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+				SpawnParams.Owner = GetOwner();
+				SpawnParams.Instigator = GetInstigator();
+
+				AWeaponDefault* Weapon = Cast<AWeaponDefault>(
+					GetWorld()->SpawnActor(WeaponInfo.WeaponClass, &SpawnLocation, &SpawnRotation, SpawnParams));
+				if (Weapon)
+				{
+					const FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
+					Weapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
+					CurrentWeapon = Weapon;
+					Weapon->WeaponSetting = WeaponInfo;
+					Weapon->WeaponInfo.Round = WeaponInfo.MaxRound;
+					Weapon->ReloadTime = WeaponInfo.ReloadTime;
+					Weapon->UpdateStateWeapon(MovementState);
+					(MovementState == ECharacterMovementState::Aim_State || MovementState ==
+						ECharacterMovementState::AimWalk_State)
+						? Weapon->UpdateWeaponAimingState(true)
+						: Weapon->UpdateWeaponAimingState(false);
+					Weapon->OnWeaponReloadStart.AddDynamic(this, &ATDSCharacter::WeaponReloadStart);
+					Weapon->OnWeaponReloadEnd.AddDynamic(this, &ATDSCharacter::WeaponReloadEnd);
+					Weapon->OnWeaponFireStart.AddDynamic(this, &ATDSCharacter::WeaponFireStart);
+				}
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning,
+			       TEXT("ATPSCharacter::InitWeapon - Weapon not found in table, set weapon or check spelling"));
+		}
+	}
+}
+
+void ATDSCharacter::WeaponFireStart(UAnimMontage* Anim)
+{
+	if (CurrentWeapon)
+		WeaponFireStart_BP(Anim);
+}
+
+UDecalComponent* ATDSCharacter::GetCursorToWorld() const
+{
+	return CurrentCursor;
+}
+
+
+void ATDSCharacter::TryReloadWeapon()
+{
+	if (CurrentWeapon)
+	{
+		if (CurrentWeapon->GetWeaponRound() <= CurrentWeapon->WeaponSetting.MaxRound)
+			CurrentWeapon->InitReload();
+	}
+}
+
+void ATDSCharacter::WeaponReloadStart(UAnimMontage* Anim)
+{
+	WeaponReloadStart_BP(Anim);
+}
+
+void ATDSCharacter::WeaponReloadEnd()
+{
+	WeaponReloadEnd_BP();
+}
+
+void ATDSCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage* Anim)
+{
+	// in BP
+}
+
+void ATDSCharacter::WeaponReloadEnd_BP_Implementation()
+{
+	// in BP
+}
+
+void ATDSCharacter::WeaponFireStart_BP_Implementation(UAnimMontage* Anim)
+{
+	// in BP
 }

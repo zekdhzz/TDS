@@ -29,12 +29,12 @@ void ATDSPlayerController::SetupInputComponent()
 	// set up gameplay key bindings
 	Super::SetupInputComponent();
 
-	InputComponent->BindAction("SetDestination", IE_Pressed, this, &ATDSPlayerController::OnSetDestinationPressed);
-	InputComponent->BindAction("SetDestination", IE_Released, this, &ATDSPlayerController::OnSetDestinationReleased);
+	// InputComponent->BindAction("SetDestination", IE_Pressed, this, &ATDSPlayerController::OnSetDestinationPressed);
+	// InputComponent->BindAction("SetDestination", IE_Released, this, &ATDSPlayerController::OnSetDestinationReleased);
 
 	// support touch devices 
-	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ATDSPlayerController::MoveToTouchLocation);
-	InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ATDSPlayerController::MoveToTouchLocation);
+	// InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ATDSPlayerController::MoveToTouchLocation);
+	// InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ATDSPlayerController::MoveToTouchLocation);
 
 }
 

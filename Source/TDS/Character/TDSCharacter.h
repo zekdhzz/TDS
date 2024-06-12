@@ -4,8 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "TDS/FuncLibrary/TDSTypes.h"
+#include "TDS/Enumerations/TDSCharacterEnums.h"
+#include "TDS/Structs/TDSCharacterStructs.h"
 #include "TDSCharacter.generated.h"
+
+class AWeaponDefault;
 
 UCLASS(Blueprintable)
 class ATDSCharacter : public ACharacter
@@ -24,9 +27,9 @@ public:
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns CursorToWorld subobject **/
-	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
-	
+
+protected:
+	virtual void BeginPlay() override;
 private:
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -36,15 +39,11 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
 
-	/** A decal that projects to the cursor location. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UDecalComponent* CursorToWorld;
-
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
-	float CameraMinHeight = 1000.0f;
+	float CameraMinHeight = 1500.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
-	float CameraMaxHeight = 2000.0f;
+	float CameraMaxHeight = 3000.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
 	float CameraZoomDistance = 0.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
@@ -57,26 +56,40 @@ public:
 	void SoothingCameraZoom();
 	FTimerHandle CameraSmoothTimerHandle;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")
+	UMaterialInterface* CursorMaterial = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")
+	FVector CursorSize = FVector(20.0f, 40.0f, 40.0f);
+	UDecalComponent* CurrentCursor = nullptr;
+	UFUNCTION(BlueprintCallable)
+	UDecalComponent* GetCursorToWorld() const;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
-	EMovementState MovementState = EMovementState::Run_State;
+	ECharacterMovementState MovementState = ECharacterMovementState::Run_State;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Movement")
 	FCharacterSpeed MovementInfo;
+	float CharacterMaxMovementSpeed;
 	float AxisX = 0.0f;
 	float AxisY = 0.0f;
-
 	UFUNCTION()
+	
 	void InputAxisX(float Value);
 	UFUNCTION()
 	void InputAxisY(float Value);
-
-	float CharacterMaxMovementSpeed;
-
+	UFUNCTION()
+	void InputAttackPressed();
+	UFUNCTION()
+	void InputAttackReleased();
+	
+	UFUNCTION(BlueprintCallable)
+	USkeletalMeshComponent* GetCharacterMesh() const;
+	
 	UFUNCTION()
 	void MovementTick();
 	UFUNCTION(BlueprintCallable)
 	void CharacterUpdate();
 	UFUNCTION(BlueprintCallable)
-	void ChangeMovementState(EMovementState NewMovementState);
+	void ChangeMovementState(ECharacterMovementState NewMovementState);
 
 	UFUNCTION(BlueprintCallable)
 	void CharacterAim();
@@ -97,11 +110,6 @@ public:
 	bool IsSprinting;
 	bool IsMovingInDirectionToInput;
 
-	void PrintState() const;
-
-	// UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Movement")
-	// FVector MousePositionVector;
-
 	float MaxStamina = 100.f;
 	float Stamina = MaxStamina;
 	float RecoveryStaminaPerTick = 0.5f;
@@ -109,4 +117,44 @@ public:
 	bool IsStaminaRecovering;
 	FTimerHandle StaminaRecoveryTimerHandle;
 	void RecoveryStamina();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Demo")
+	TSubclassOf<AWeaponDefault> InitWeaponClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Demo")
+	FName InitWeaponName;
+
+	UFUNCTION(BlueprintCallable)
+	void SetInitWeaponName(FString WeaponName);
+	
+	UFUNCTION(BlueprintCallable)
+	void AttackCharEvent(bool bIsFiring);
+	AWeaponDefault* CurrentWeapon = nullptr;
+	UFUNCTION(BlueprintCallable)
+	AWeaponDefault* GetCurrentWeapon() const;
+	UFUNCTION(BlueprintCallable)
+	void InitWeapon(FName IdWeaponName);
+	UFUNCTION()
+	void WeaponFireStart(UAnimMontage* Anim);
+	UFUNCTION(BlueprintCallable)
+	void TryReloadWeapon();
+	UFUNCTION()
+	void WeaponReloadStart(UAnimMontage* Anim);
+	UFUNCTION()
+	void WeaponReloadEnd();
+	UFUNCTION(BlueprintNativeEvent)
+	void WeaponReloadStart_BP(UAnimMontage* Anim);
+	UFUNCTION(BlueprintNativeEvent)
+	void WeaponReloadEnd_BP();
+	UFUNCTION(BlueprintNativeEvent)
+	void WeaponFireStart_BP(UAnimMontage* Anim);
+	void SetWeaponDisplacement(FVector_NetQuantize Location) const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetWeaponDebugState(bool State) const;
+	UFUNCTION(BlueprintCallable)
+	bool GetWeaponDebugState() const;
+	
+	//for debug
+	void PrintState() const;
 };
