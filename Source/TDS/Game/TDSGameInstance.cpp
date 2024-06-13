@@ -1,6 +1,6 @@
 ﻿#include "TDSGameInstance.h"
 
-bool UTDSGameInstance::GetWeaponInfoByName(const FName NameWeapon, FWeaponInfo& OutInfo) const
+bool UTDSGameInstance::GetWeaponInfoByName(const FName NameWeapon, FWeaponInfo& OutInfo)
 {
 	bool bIsFind = false;
 	if (WeaponInfoTable)
@@ -20,7 +20,7 @@ bool UTDSGameInstance::GetWeaponInfoByName(const FName NameWeapon, FWeaponInfo& 
 }
 
 
-bool UTDSGameInstance::GetDropItemInfoByName(const FName NameItem, FDropItem& OutInfo) const
+bool UTDSGameInstance::GetDropItemInfoByName(const FName NameItem, FDropItem& OutInfo)
 {
 	bool bIsFind = false;
 	
