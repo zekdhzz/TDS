@@ -216,13 +216,13 @@ void AWeaponDefault::Fire()
 		FRotator SpawnRotation = ShootLocation->GetComponentRotation();
 		FProjectileInfo ProjectileInfo;
 		ProjectileInfo = GetProjectile();
-		FVector EndLocation;
+		FVector EndTraceLocation;
 		for (int8 i = 0; i < NumberProjectile; i++) //Shotgun
 		{
-			EndLocation = GetFireEndLocation();
-			FVector Dir = EndLocation - SpawnLocation;
-			Dir.Normalize();
-			SpawnRotation = FMatrix(Dir, FVector(0, 0, 0), FVector(0, 0, 0), FVector::ZeroVector).Rotator();
+			EndTraceLocation = GetFireEndLocation();
+			//FVector Dir = EndTraceLocation - SpawnLocation;
+			//Dir.Normalize();
+			//FRotator SpawnTraceRotation = FMatrix(Dir, FVector(0, 1, 0), FVector(0, 0, 1), FVector::ZeroVector).Rotator();
 			if (ProjectileInfo.Projectile)
 			{
 				FActorSpawnParameters SpawnParams;
@@ -257,7 +257,7 @@ void AWeaponDefault::Fire()
 					DebugTrace = EDrawDebugTrace::None;
 
 				UKismetSystemLibrary::LineTraceSingle(GetWorld(), SpawnLocation,
-				                                      EndLocation * WeaponSetting.DistacneTrace,
+				                                      EndTraceLocation * WeaponSetting.DistacneTrace,
 				                                      ETraceTypeQuery::TraceTypeQuery4, false, Actors, DebugTrace, Hit,
 				                                      true, FLinearColor::Red, FLinearColor::Green, 5.0f);
 				if (Hit.GetActor() && Hit.PhysMaterial.IsValid())
