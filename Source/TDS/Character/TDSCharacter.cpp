@@ -1,6 +1,5 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "TDSCharacter.h"
+#include "TDSInventoryComponent.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/DecalComponent.h"
@@ -143,18 +142,6 @@ void ATDSCharacter::InputAttackReleased()
 {
 	UE_LOG(LogTemp, Warning, TEXT("InputAttackReleased"));
 	AttackCharEvent(false);
-}
-
-USkeletalMeshComponent* ATDSCharacter::GetCharacterMesh() const
-{
-	USkeletalMeshComponent* MeshComponent = nullptr;
-
-	if (this->GetParentActor() != nullptr)
-	{
-		MeshComponent = Cast<USkeletalMeshComponent>(
-			this->GetParentActor()->GetComponentByClass(USkeletalMeshComponent::StaticClass()));
-	}
-	return (MeshComponent);
 }
 
 void ATDSCharacter::SetWeaponDisplacement(const FVector_NetQuantize Location) const
@@ -477,9 +464,14 @@ void ATDSCharacter::WeaponReloadStart(UAnimMontage* Anim)
 	WeaponReloadStart_BP(Anim);
 }
 
-void ATDSCharacter::WeaponReloadEnd()
+void ATDSCharacter::WeaponReloadEnd(const bool bIsSuccess, const int32 AmmoTake)
 {
-	WeaponReloadEnd_BP();
+	if (InventoryComponent && CurrentWeapon)
+	{
+		InventoryComponent->AmmoSlotChangeValue(CurrentWeapon->WeaponSetting.WeaponType, AmmoTake);
+		InventoryComponent->SetAdditionalInfoWeapon(CurrentIndexWeapon, CurrentWeapon->AdditionalWeaponInfo);
+	}
+	WeaponReloadEnd_BP(bIsSuccess);
 }
 
 void ATDSCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage* Anim)
@@ -487,7 +479,7 @@ void ATDSCharacter::WeaponReloadStart_BP_Implementation(UAnimMontage* Anim)
 	// in BP
 }
 
-void ATDSCharacter::WeaponReloadEnd_BP_Implementation()
+void ATDSCharacter::WeaponReloadEnd_BP_Implementation(bool bIsSuccess)
 {
 	// in BP
 }
@@ -495,4 +487,49 @@ void ATDSCharacter::WeaponReloadEnd_BP_Implementation()
 void ATDSCharacter::WeaponFireStart_BP_Implementation(UAnimMontage* Anim)
 {
 	// in BP
+}
+
+void ATDSCharacter::TrySwitchNextWeapon() const
+{
+	if (InventoryComponent->WeaponSlots.Num() > 1)
+	{
+		const int8 OldIndex = CurrentIndexWeapon;
+		FAdditionalWeaponInfo OldInfo;
+		if (CurrentWeapon)
+		{
+			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
+			if (CurrentWeapon->WeaponReloading)
+				CurrentWeapon->CancelReload();
+		}
+
+		if (InventoryComponent)
+		{
+			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon + 1, OldIndex, OldInfo, true))
+			{
+			}
+		}
+	}
+}
+
+void ATDSCharacter::TrySwitchPreviousWeapon() const
+{
+	if (InventoryComponent->WeaponSlots.Num() > 1)
+	{
+		const int8 OldIndex = CurrentIndexWeapon;
+		FAdditionalWeaponInfo OldInfo;
+		if (CurrentWeapon)
+		{
+			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
+			if (CurrentWeapon->WeaponReloading)
+				CurrentWeapon->CancelReload();
+		}
+
+		if (InventoryComponent)
+		{
+			//InventoryComponent->SetAdditionalInfoWeapon(OldIndex, GetCurrentWeapon()->AdditionalWeaponInfo);
+			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon - 1, OldIndex, OldInfo, false))
+			{
+			}
+		}
+	}
 }

@@ -18,3 +18,31 @@ bool UTDSGameInstance::GetWeaponInfoByName(const FName NameWeapon, FWeaponInfo& 
 	}
 	return bIsFind;
 }
+
+
+bool UTDSGameInstance::GetDropItemInfoByName(const FName NameItem, FDropItem& OutInfo) const
+{
+	bool bIsFind = false;
+	
+	if (DropItemInfoTable)
+	{
+		TArray<FName>RowNames = DropItemInfoTable->GetRowNames();
+		
+		int8 i = 0;
+		while (i < RowNames.Num() && !bIsFind)
+		{
+			const FDropItem* DropItemInfoRow = DropItemInfoTable->FindRow<FDropItem>(RowNames[i], "");
+			if (DropItemInfoRow->WeaponInfo.NameItem == NameItem)
+			{
+				OutInfo = (*DropItemInfoRow);	
+				bIsFind = true;
+			}
+			i++;
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UTPSGameInstance::GetDropItemInfoByName - DropItemInfoTable -NULL"));
+	}
+	return bIsFind;
+}

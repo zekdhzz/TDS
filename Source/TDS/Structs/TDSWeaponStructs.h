@@ -4,6 +4,7 @@
 #include "TDSProjectileStructs.h"
 #include "Engine/DataTable.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "TDS/Enumerations/TDSWeaponEnums.h"
 #include "TDSWeaponStructs.generated.h"
 
 USTRUCT(BlueprintType)
@@ -138,6 +139,14 @@ struct FWeaponInfo : public FTableRowBase
 	FDropMeshInfo ClipDropMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh ")
 	FDropMeshInfo ShellBullets;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory ")
+	float SwitchTimeToWeapon = 1.0f;
+		
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory ")
+	UTexture2D* WeaponIcon = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory ")
+	EWeaponType WeaponType = EWeaponType::RifleType;
 };
 
 USTRUCT(BlueprintType)

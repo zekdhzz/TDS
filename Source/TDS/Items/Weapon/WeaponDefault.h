@@ -10,7 +10,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponFireStart, UAnimMontage*, A
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponReloadStart, UAnimMontage*, Anim);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloadEnd);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponReloadEnd, bool, bIsSuccess, int32, AmmoSafe);
 
 UCLASS()
 class TDS_API AWeaponDefault : public AActor
@@ -38,6 +38,8 @@ public:
 	FWeaponInfo WeaponSetting;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
 	FAdditionalWeaponInfo WeaponInfo;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
+	FAdditionalWeaponInfo AdditionalWeaponInfo;
 
 protected:
 	// Called when the game starts or when spawned
@@ -95,8 +97,14 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetWeaponRound() const;
+	int8 GetAvailableAmmoForReload() const;
+	
 	void InitReload();
 	void FinishReload();
+	void CancelReload();
+	bool CheckCanWeaponReload() const;
+
+	
 	UFUNCTION()
 	void AnimWeaponStart(UAnimMontage* WeaponAnim) const;
 
@@ -131,5 +139,6 @@ public:
 	UFUNCTION()
 	void SpawnTraceHitSound(USoundBase* HitSound, const FHitResult& HitResult) const;
 
+	
 	void DebugShowStatus() const;
 };

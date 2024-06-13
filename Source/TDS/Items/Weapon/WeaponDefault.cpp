@@ -7,6 +7,7 @@
 #include "GameFramework/HUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "TDS/Character/TDSInventoryComponent.h"
 
 AWeaponDefault::AWeaponDefault()
 {
@@ -151,7 +152,6 @@ void AWeaponDefault::SetWeaponStateFire(const bool bIsFire)
 		WeaponFiring = false;
 		FireTimer = 0.005f;
 	}
-
 }
 
 bool AWeaponDefault::CheckWeaponCanFire() const
@@ -403,6 +403,24 @@ int32 AWeaponDefault::GetWeaponRound() const
 	return WeaponInfo.Round;
 }
 
+int8 AWeaponDefault::GetAvailableAmmoForReload() const
+{
+	int8 AmmoForWeapon = WeaponSetting.MaxRound;
+	if (GetOwner())
+	{
+		UTDSInventoryComponent* MyInv = Cast<UTDSInventoryComponent>(
+			GetOwner()->GetComponentByClass(UTDSInventoryComponent::StaticClass()));
+		if (MyInv)
+		{
+			if (MyInv->CheckAmmoForWeapon(WeaponSetting.WeaponType, AmmoForWeapon))
+			{
+				AmmoForWeapon = AmmoForWeapon; ///?????
+			}
+		}
+	}
+	return AmmoForWeapon;
+}
+
 void AWeaponDefault::InitReload()
 {
 	WeaponReloading = true;
@@ -438,9 +456,52 @@ void AWeaponDefault::InitReload()
 void AWeaponDefault::FinishReload()
 {
 	WeaponReloading = false;
-	WeaponInfo.Round = WeaponSetting.MaxRound;
-	UE_LOG(LogTemp, Warning, TEXT("Reloaded. Rounds in clip %i"), WeaponInfo.Round);
-	OnWeaponReloadEnd.Broadcast();
+
+	const int8 AvailableAmmoFromInventory = GetAvailableAmmoForReload();
+	int8 AmmoNeedTakeFromInv;
+	const int8 NeedToReload = WeaponSetting.MaxRound - AdditionalWeaponInfo.Round;
+	if (NeedToReload > AvailableAmmoFromInventory)
+	{
+		AdditionalWeaponInfo.Round = AvailableAmmoFromInventory;
+		AmmoNeedTakeFromInv = AvailableAmmoFromInventory;
+	}
+	else
+	{
+		AdditionalWeaponInfo.Round += NeedToReload;
+		AmmoNeedTakeFromInv = NeedToReload;
+	}
+	OnWeaponReloadEnd.Broadcast(true, -AmmoNeedTakeFromInv);
+}
+
+void AWeaponDefault::CancelReload()
+{
+	WeaponReloading = false;
+	if (SkeletalMeshWeapon && SkeletalMeshWeapon->GetAnimInstance())
+	{
+		SkeletalMeshWeapon->GetAnimInstance()->StopAllMontages(0.15f);
+	}
+	OnWeaponReloadEnd.Broadcast(false, 0);
+	DropClipFlag = false;
+}
+
+bool AWeaponDefault::CheckCanWeaponReload() const
+{
+	bool bResult = true;
+	if (GetOwner())
+	{
+		UTDSInventoryComponent* MyInv = Cast<UTDSInventoryComponent>(
+			GetOwner()->GetComponentByClass(UTDSInventoryComponent::StaticClass()));
+		if (MyInv)
+		{
+			int8 AvailableAmmoForWeapon;
+			if (!MyInv->CheckAmmoForWeapon(WeaponSetting.WeaponType, AvailableAmmoForWeapon))
+			{
+				bResult = false;
+			}
+		}
+	}
+
+	return bResult;
 }
 
 void AWeaponDefault::AnimWeaponStart(UAnimMontage* WeaponAnim) const

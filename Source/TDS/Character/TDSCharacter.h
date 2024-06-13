@@ -39,6 +39,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UTDSInventoryComponent* InventoryComponent;
+	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera")
 	float CameraMinHeight = 1500.0f;
@@ -60,6 +63,7 @@ public:
 	UMaterialInterface* CursorMaterial = nullptr;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cursor")
 	FVector CursorSize = FVector(20.0f, 40.0f, 40.0f);
+	UPROPERTY()
 	UDecalComponent* CurrentCursor = nullptr;
 	UFUNCTION(BlueprintCallable)
 	UDecalComponent* GetCursorToWorld() const;
@@ -80,10 +84,7 @@ public:
 	void InputAttackPressed();
 	UFUNCTION()
 	void InputAttackReleased();
-	
-	UFUNCTION(BlueprintCallable)
-	USkeletalMeshComponent* GetCharacterMesh() const;
-	
+
 	UFUNCTION()
 	void MovementTick();
 	UFUNCTION(BlueprintCallable)
@@ -129,6 +130,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void AttackCharEvent(bool bIsFiring);
+	UPROPERTY()
 	AWeaponDefault* CurrentWeapon = nullptr;
 	UFUNCTION(BlueprintCallable)
 	AWeaponDefault* GetCurrentWeapon() const;
@@ -141,11 +143,11 @@ public:
 	UFUNCTION()
 	void WeaponReloadStart(UAnimMontage* Anim);
 	UFUNCTION()
-	void WeaponReloadEnd();
+	void WeaponReloadEnd(bool bIsSuccess, int32 AmmoTake);
 	UFUNCTION(BlueprintNativeEvent)
 	void WeaponReloadStart_BP(UAnimMontage* Anim);
 	UFUNCTION(BlueprintNativeEvent)
-	void WeaponReloadEnd_BP();
+	void WeaponReloadEnd_BP(bool bIsSuccess);
 	UFUNCTION(BlueprintNativeEvent)
 	void WeaponFireStart_BP(UAnimMontage* Anim);
 	void SetWeaponDisplacement(FVector_NetQuantize Location) const;
@@ -155,6 +157,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool GetWeaponDebugState() const;
 	
+	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly)
+	int32 CurrentIndexWeapon = 0;
+	void TrySwitchNextWeapon() const;
+	void TrySwitchPreviousWeapon() const;
+
+
 	//for debug
 	void PrintState() const;
 };
