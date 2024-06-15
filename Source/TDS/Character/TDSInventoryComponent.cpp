@@ -12,7 +12,7 @@ void UTDSInventoryComponent::BeginPlay()
 
 	for (int8 i = 0; i < WeaponSlots.Num(); i++)
 	{
-		const UTDSGameInstance* GI = Cast<UTDSGameInstance>(GetWorld()->GetGameInstance());
+		UTDSGameInstance* GI = Cast<UTDSGameInstance>(GetWorld()->GetGameInstance());
 		if (GI)
 		{
 			if (!WeaponSlots[i].NameItem.IsNone())
@@ -586,4 +586,75 @@ bool UTDSInventoryComponent::GetDropItemInfoFromInventory(const int32 IndexSlot,
 	}
 
 	return result;
+}
+
+TArray<FWeaponSlot> UTDSInventoryComponent::GetWeaponSlots()
+{
+	return WeaponSlots;
+}
+
+TArray<FAmmoSlot> UTDSInventoryComponent::GetAmmoSlots()
+{
+	return AmmoSlots;
+}
+
+void UTDSInventoryComponent::InitInventory(const TArray<FWeaponSlot>& NewWeaponSlotsInfo,
+	const TArray<FAmmoSlot>& NewAmmoSlotsInfo)
+{
+	WeaponSlots = NewWeaponSlotsInfo;
+	AmmoSlots = NewAmmoSlotsInfo;
+	//Find init weaponsSlots and First Init Weapon
+
+	MaxSlotsWeapon = WeaponSlots.Num();
+
+	if (WeaponSlots.IsValidIndex(0))
+	{
+		if (!WeaponSlots[0].NameItem.IsNone())
+		{
+			//OnSwitchWeapon.Broadcast(WeaponSlots[0].NameItem, WeaponSlots[0].AdditionalInfo, 0);
+			SwitchWeaponEvent(WeaponSlots[0].NameItem, WeaponSlots[0].AdditionalInfo, 0);
+		}
+			
+			
+	}
+}
+
+void UTDSInventoryComponent::AmmoChangeEvent(EWeaponType TypeWeapon, int32 Cout)
+{
+	OnAmmoChange.Broadcast(TypeWeapon, Cout);
+}
+
+void UTDSInventoryComponent::SwitchWeaponEvent(FName WeaponName, FAdditionalWeaponInfo AdditionalInfo, int32 IndexSlot)
+{
+	OnSwitchWeapon.Broadcast(WeaponName,AdditionalInfo,IndexSlot);
+}
+
+void UTDSInventoryComponent::WeaponAdditionalInfoChangeEvent(int32 IndexSlot, FAdditionalWeaponInfo AdditionalInfo)
+{
+	OnWeaponAdditionalInfoChange.Broadcast(IndexSlot,AdditionalInfo);
+}
+
+void UTDSInventoryComponent::WeaponAmmoEmptyEvent(EWeaponType TypeWeapon)
+{
+	OnWeaponAmmoEmpty.Broadcast(TypeWeapon);
+}
+
+void UTDSInventoryComponent::WeaponAmmoAviableEvent(EWeaponType TypeWeapon)
+{
+	OnWeaponAmmoAvailable.Broadcast(TypeWeapon);
+}
+
+void UTDSInventoryComponent::UpdateWeaponSlotsEvent(int32 IndexSlotChange, FWeaponSlot NewInfo)
+{
+	OnUpdateWeaponSlots.Broadcast(IndexSlotChange,NewInfo);
+}
+
+void UTDSInventoryComponent::WeaponNotHaveRoundEvent(int32 IndexSlotWeapon)
+{
+	OnWeaponNotHaveRound.Broadcast(IndexSlotWeapon);
+}
+
+void UTDSInventoryComponent::WeaponHaveRoundEvent(int32 IndexSlotWeapon)
+{
+	OnWeaponHaveRound.Broadcast(IndexSlotWeapon);
 }

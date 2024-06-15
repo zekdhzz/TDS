@@ -11,14 +11,14 @@
 #include "TDSInventoryComponent.generated.h"
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSwitchWeapon, FName, WeaponIdName, FAdditionalWeaponInfo,
-                                               WeaponAdditionalInfo, int32, NewCurrentIndexWeapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnSwitchWeapon, FName, WeaponIdName, FAdditionalWeaponInfo,WeaponAdditionalInfo, int32, NewCurrentIndexWeapon);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmmoChange, EWeaponType, TypeAmmo, int32, Cout);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponAdditionalInfoChange, int32, IndexSlot, FAdditionalWeaponInfo,
-                                             AdditionalInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponAdditionalInfoChange, int32, IndexSlot, FAdditionalWeaponInfo,AdditionalInfo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponAmmoEmpty, EWeaponType, WeaponType);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponAmmoAviable, EWeaponType, WeaponType);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUpdateWeaponSlots, int32, IndexSlotChange, FWeaponSlot, NewInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponNotHaveRound, int32, IndexSlotWeapon);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponHaveRound, int32, IndexSlotWeapon);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class TDS_API UTDSInventoryComponent : public UActorComponent
@@ -29,6 +29,7 @@ public:
 	// Sets default values for this component's properties
 	UTDSInventoryComponent();
 
+	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	FOnSwitchWeapon OnSwitchWeapon;
 	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	FOnAmmoChange OnAmmoChange;
@@ -40,7 +41,11 @@ public:
 	FOnWeaponAmmoAviable OnWeaponAmmoAvailable;
 	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	FOnUpdateWeaponSlots OnUpdateWeaponSlots;
-
+	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	FOnWeaponNotHaveRound OnWeaponNotHaveRound;
+	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	FOnWeaponHaveRound OnWeaponHaveRound;
+	
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -82,4 +87,30 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Interface")
 	bool GetDropItemInfoFromInventory(int32 IndexSlot, FDropItem& DropItemInfo);
+
+	UFUNCTION(BlueprintCallable, Category = "Inv")
+	TArray<FWeaponSlot> GetWeaponSlots();
+	UFUNCTION(BlueprintCallable, Category = "Inv")
+	TArray<FAmmoSlot> GetAmmoSlots();
+
+	UFUNCTION(BlueprintCallable, Category = "Inv")
+	void InitInventory(const TArray<FWeaponSlot>& NewWeaponSlotsInfo, const TArray<FAmmoSlot>& NewAmmoSlotsInfo);
+	
+
+	UFUNCTION()
+	void AmmoChangeEvent(EWeaponType TypeWeapon, int32 Cout);
+	UFUNCTION()
+	void SwitchWeaponEvent(FName WeaponName, FAdditionalWeaponInfo AdditionalInfo, int32 IndexSlot);
+	UFUNCTION()
+	void WeaponAdditionalInfoChangeEvent(int32 IndexSlot, FAdditionalWeaponInfo AdditionalInfo);
+	UFUNCTION()
+	void WeaponAmmoEmptyEvent(EWeaponType TypeWeapon);
+	UFUNCTION()
+	void WeaponAmmoAviableEvent(EWeaponType TypeWeapon);
+	UFUNCTION()
+	void UpdateWeaponSlotsEvent(int32 IndexSlotChange, FWeaponSlot NewInfo);
+	UFUNCTION()
+	void WeaponNotHaveRoundEvent(int32 IndexSlotWeapon);
+	UFUNCTION()
+	void WeaponHaveRoundEvent(int32 IndexSlotWeapon);
 };

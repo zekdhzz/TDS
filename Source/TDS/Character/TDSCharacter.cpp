@@ -43,6 +43,12 @@ ATDSCharacter::ATDSCharacter()
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	InventoryComponent = CreateDefaultSubobject<UTDSInventoryComponent>(TEXT("InventoryComponent"));
+	if (InventoryComponent)
+	{
+		InventoryComponent->OnSwitchWeapon.AddDynamic(this, &ATDSCharacter::InitWeapon);
+	}
+
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
@@ -55,7 +61,10 @@ void ATDSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InitWeapon(InitWeaponName);
+	FWeaponInfo NewWeapon;
+	constexpr FAdditionalWeaponInfo NewAdditionalInfo;
+	Cast<UTDSGameInstance>(GetGameInstance())->GetWeaponInfoByName(InitWeaponName, NewWeapon);
+	InitWeapon(InitWeaponName,NewAdditionalInfo ,0);
 
 	if (CursorMaterial)
 	{
@@ -370,7 +379,11 @@ void ATDSCharacter::SetInitWeaponName(FString WeaponName)
 	InitWeaponName = FName(WeaponName);
 	UE_LOG(LogTemp, Warning, TEXT("In BP chosen weapon is %s"), *WeaponName)
 	CurrentWeapon->Destroy();
-	InitWeapon(InitWeaponName);
+	CurrentWeapon = nullptr;
+	FWeaponInfo NewWeapon;
+	constexpr FAdditionalWeaponInfo NewAdditionalInfo;
+	Cast<UTDSGameInstance>(GetGameInstance())->GetWeaponInfoByName(InitWeaponName, NewWeapon);
+	InitWeapon(InitWeaponName,NewAdditionalInfo ,0);
 	UE_LOG(LogTemp, Log, TEXT("Seted weapon is %s"), *CurrentWeapon->WeaponSetting.WeaponClass->GetFName().ToString())
 }
 
@@ -391,9 +404,16 @@ AWeaponDefault* ATDSCharacter::GetCurrentWeapon() const
 	return CurrentWeapon;
 }
 
-void ATDSCharacter::InitWeapon(const FName IdWeaponName)
+void ATDSCharacter::InitWeapon(const FName IdWeaponName, const FAdditionalWeaponInfo WeaponAdditionalInfo,
+                               const int32 NewCurrentIndexWeapon)
 {
-	const UTDSGameInstance* GI = Cast<UTDSGameInstance>(GetGameInstance());
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->Destroy();
+		CurrentWeapon = nullptr;
+	}
+
+	UTDSGameInstance* GI = Cast<UTDSGameInstance>(GetGameInstance());
 	if (GI)
 	{
 		FWeaponInfo WeaponInfo;
@@ -420,6 +440,8 @@ void ATDSCharacter::InitWeapon(const FName IdWeaponName)
 					Weapon->WeaponInfo.Round = WeaponInfo.MaxRound;
 					Weapon->ReloadTime = WeaponInfo.ReloadTime;
 					Weapon->UpdateStateWeapon(MovementState);
+					Weapon->AdditionalWeaponInfo = WeaponAdditionalInfo;
+					CurrentIndexWeapon = NewCurrentIndexWeapon;
 					(MovementState == ECharacterMovementState::Aim_State || MovementState ==
 						ECharacterMovementState::AimWalk_State)
 						? Weapon->UpdateWeaponAimingState(true)
@@ -427,6 +449,15 @@ void ATDSCharacter::InitWeapon(const FName IdWeaponName)
 					Weapon->OnWeaponReloadStart.AddDynamic(this, &ATDSCharacter::WeaponReloadStart);
 					Weapon->OnWeaponReloadEnd.AddDynamic(this, &ATDSCharacter::WeaponReloadEnd);
 					Weapon->OnWeaponFireStart.AddDynamic(this, &ATDSCharacter::WeaponFireStart);
+					if (CurrentWeapon->GetWeaponRound() <= 0 && CurrentWeapon->CheckCanWeaponReload())
+					{
+						CurrentWeapon->InitReload();
+					}
+
+					if (InventoryComponent)
+					{
+						InventoryComponent->OnWeaponAmmoAvailable.Broadcast(Weapon->WeaponSetting.WeaponType);
+					}
 				}
 			}
 		}

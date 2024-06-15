@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "TDS/Enumerations/TDSCharacterEnums.h"
 #include "TDS/Structs/TDSCharacterStructs.h"
+#include "TDS/Structs/TDSWeaponStructs.h"
 #include "TDSCharacter.generated.h"
 
 class AWeaponDefault;
@@ -39,7 +40,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Inventory, meta = (AllowPrivateAccess = "true"))
 	class UTDSInventoryComponent* InventoryComponent;
 	
 public:
@@ -135,7 +136,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AWeaponDefault* GetCurrentWeapon() const;
 	UFUNCTION(BlueprintCallable)
-	void InitWeapon(FName IdWeaponName);
+	void InitWeapon(FName IdWeaponName, FAdditionalWeaponInfo WeaponAdditionalInfo, int32 NewCurrentIndexWeapon);
 	UFUNCTION()
 	void WeaponFireStart(UAnimMontage* Anim);
 	UFUNCTION(BlueprintCallable)
