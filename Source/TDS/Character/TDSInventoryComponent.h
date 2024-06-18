@@ -29,22 +29,29 @@ public:
 	// Sets default values for this component's properties
 	UTDSInventoryComponent();
 
-	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnSwitchWeapon OnSwitchWeapon;
-	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnAmmoChange OnAmmoChange;
-	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnWeaponAdditionalInfoChange OnWeaponAdditionalInfoChange;
-	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnWeaponAmmoEmpty OnWeaponAmmoEmpty;
-	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnWeaponAmmoAviable OnWeaponAmmoAvailable;
-	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnUpdateWeaponSlots OnUpdateWeaponSlots;
-	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnWeaponNotHaveRound OnWeaponNotHaveRound;
-	UPROPERTY(BlueprintAssignable, EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnWeaponHaveRound OnWeaponHaveRound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapons")
+	TArray<FWeaponSlot> WeaponSlots;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapons")
+	TArray<FAmmoSlot> AmmoSlots;
+		
+	int32 MaxSlotsWeapon = 0;
 	
 protected:
 	// Called when the game starts
@@ -55,23 +62,19 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapons")
-	TArray<FWeaponSlot> WeaponSlots;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapons")
-	TArray<FAmmoSlot> AmmoSlots;
+	bool SwitchWeaponToIndexByNextPreviousIndex(int32 ChangeToIndex, int32 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward);
+	bool SwitchWeaponByIndex(int32 IndexWeaponToChange, int32 PreviousIndex, FAdditionalWeaponInfo PreviousWeaponInfo);
 
-	int32 MaxSlotsWeapon = 0;
-
-	bool SwitchWeaponToIndex(int32 ChangeToIndex, int32 OldIndex, FAdditionalWeaponInfo OldInfo, bool bIsForward);
+	void SetAdditionalInfoWeapon(int32 IndexWeapon, FAdditionalWeaponInfo NewInfo);
 
 	FAdditionalWeaponInfo GetAdditionalInfoWeapon(int32 IndexWeapon);
 	int32 GetWeaponIndexSlotByName(FName IdWeaponName);
 	FName GetWeaponNameBySlotIndex(int32 IndexSlot);
-	void SetAdditionalInfoWeapon(int32 IndexWeapon, FAdditionalWeaponInfo NewInfo);
-
+	bool GetWeaponTypeByIndexSlot(int32 IndexSlot, EWeaponType &WeaponType);
+	bool GetWeaponTypeByNameWeapon(FName IdWeaponName, EWeaponType &WeaponType);
+	
 	UFUNCTION(BlueprintCallable)
 	void AmmoSlotChangeValue(EWeaponType TypeWeapon, int32 CoutChangeAmmo);
-
 	bool CheckAmmoForWeapon(EWeaponType TypeWeapon, int8& AvailableAmmoForWeapon);
 
 	//Interface PickUp Actors
@@ -84,7 +87,8 @@ public:
 	                             FDropItem& DropItemInfo);
 	UFUNCTION(BlueprintCallable, Category = "Interface")
 	bool TryGetWeaponToInventory(FWeaponSlot NewWeapon);
-
+	UFUNCTION(BlueprintCallable, Category = "Interface")
+	void DropWeaponByIndex(int32 ByIndex);
 	UFUNCTION(BlueprintCallable, Category = "Interface")
 	bool GetDropItemInfoFromInventory(int32 IndexSlot, FDropItem& DropItemInfo);
 
@@ -96,7 +100,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Inv")
 	void InitInventory(const TArray<FWeaponSlot>& NewWeaponSlotsInfo, const TArray<FAmmoSlot>& NewAmmoSlotsInfo);
 	
-
 	UFUNCTION()
 	void AmmoChangeEvent(EWeaponType TypeWeapon, int32 Cout) const;
 	UFUNCTION()
@@ -106,7 +109,7 @@ public:
 	UFUNCTION()
 	void WeaponAmmoEmptyEvent(EWeaponType TypeWeapon) const;
 	UFUNCTION()
-	void WeaponAmmoAviableEvent(EWeaponType TypeWeapon) const;
+	void WeaponAmmoAvailableEvent(EWeaponType TypeWeapon) const;
 	UFUNCTION()
 	void UpdateWeaponSlotsEvent(int32 IndexSlotChange, FWeaponSlot NewInfo) const;
 	UFUNCTION()

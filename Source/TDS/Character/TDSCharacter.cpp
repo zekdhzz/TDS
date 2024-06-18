@@ -1,9 +1,11 @@
 #include "TDSCharacter.h"
 #include "TDSInventoryComponent.h"
+#include "TimerManager.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/DecalComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -107,6 +109,9 @@ void ATDSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAction("FireEvent", IE_Pressed, this, &ATDSCharacter::InputAttackPressed);
 	PlayerInputComponent->BindAction("FireEvent", IE_Released, this, &ATDSCharacter::InputAttackReleased);
 	PlayerInputComponent->BindAction("ReloadEvent", IE_Released, this, &ATDSCharacter::TryReloadWeapon);
+	PlayerInputComponent->BindAction("SwitchNextWeapon", IE_Pressed, this, &ATDSCharacter::TrySwitchNextWeapon);
+	PlayerInputComponent->BindAction("SwitchPreviousWeapon", IE_Pressed, this, &ATDSCharacter::TrySwitchPreviousWeapon);
+	PlayerInputComponent->BindAction("DropCurrentWeapon", IE_Pressed, this, &ATDSCharacter::DropCurrentWeapon);
 }
 
 void ATDSCharacter::InputAxisX(const float Value)
@@ -471,8 +476,11 @@ void ATDSCharacter::InitWeapon(const FName IdWeaponName, const FAdditionalWeapon
 
 void ATDSCharacter::WeaponFireStart(UAnimMontage* Anim)
 {
-	if (CurrentWeapon)
+	if (InventoryComponent && CurrentWeapon)
+	{
+		InventoryComponent->SetAdditionalInfoWeapon(CurrentIndexWeapon, CurrentWeapon->AdditionalWeaponInfo);
 		WeaponFireStart_BP(Anim);
+	}
 }
 
 UDecalComponent* ATDSCharacter::GetCursorToWorld() const
@@ -523,33 +531,33 @@ void ATDSCharacter::WeaponFireStart_BP_Implementation(UAnimMontage* Anim)
 	// in BP
 }
 
-void ATDSCharacter::TrySwitchNextWeapon() const
+void ATDSCharacter::TrySwitchNextWeapon()
 {
-	if (InventoryComponent->WeaponSlots.Num() > 1)
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlots.Num() > 1)
 	{
-		const int8 OldIndex = CurrentIndexWeapon;
 		FAdditionalWeaponInfo OldInfo;
 		if (CurrentWeapon)
 		{
 			OldInfo = CurrentWeapon->AdditionalWeaponInfo;
 			if (CurrentWeapon->WeaponReloading)
+			{
 				CurrentWeapon->CancelReload();
+			}
 		}
-
 		if (InventoryComponent)
 		{
-			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon + 1, OldIndex, OldInfo, true))
+			if (InventoryComponent->SwitchWeaponToIndexByNextPreviousIndex(
+				CurrentIndexWeapon + 1, CurrentIndexWeapon, OldInfo, true))
 			{
 			}
 		}
 	}
 }
 
-void ATDSCharacter::TrySwitchPreviousWeapon() const
+void ATDSCharacter::TrySwitchPreviousWeapon()
 {
-	if (InventoryComponent->WeaponSlots.Num() > 1)
+	if (CurrentWeapon && !CurrentWeapon->WeaponReloading && InventoryComponent->WeaponSlots.Num() > 1)
 	{
-		const int8 OldIndex = CurrentIndexWeapon;
 		FAdditionalWeaponInfo OldInfo;
 		if (CurrentWeapon)
 		{
@@ -557,13 +565,20 @@ void ATDSCharacter::TrySwitchPreviousWeapon() const
 			if (CurrentWeapon->WeaponReloading)
 				CurrentWeapon->CancelReload();
 		}
-
 		if (InventoryComponent)
 		{
-			//InventoryComponent->SetAdditionalInfoWeapon(OldIndex, GetCurrentWeapon()->AdditionalWeaponInfo);
-			if (InventoryComponent->SwitchWeaponToIndex(CurrentIndexWeapon - 1, OldIndex, OldInfo, false))
+			if (InventoryComponent->SwitchWeaponToIndexByNextPreviousIndex(
+				CurrentIndexWeapon - 1, CurrentIndexWeapon, OldInfo, false))
 			{
 			}
 		}
+	}
+}
+
+void ATDSCharacter::DropCurrentWeapon()
+{
+	if (InventoryComponent)
+	{
+		InventoryComponent->DropWeaponByIndex(CurrentIndexWeapon);
 	}
 }

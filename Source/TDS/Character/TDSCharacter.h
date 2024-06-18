@@ -160,10 +160,11 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly)
 	int32 CurrentIndexWeapon = 0;
-	void TrySwitchNextWeapon() const;
-	void TrySwitchPreviousWeapon() const;
+	void TrySwitchNextWeapon();
+	void TrySwitchPreviousWeapon();
 
-
+	void DropCurrentWeapon();
+	
 	//for debug
 	void PrintState() const;
 };

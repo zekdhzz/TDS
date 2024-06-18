@@ -4,7 +4,6 @@
 #include "ProjectileDefault.h"
 #include "Components/ArrowComponent.h"
 #include "Engine/StaticMeshActor.h"
-#include "GameFramework/HUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "TDS/Character/TDSInventoryComponent.h"
