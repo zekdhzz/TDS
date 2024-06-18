@@ -9,7 +9,6 @@ UTDSInventoryComponent::UTDSInventoryComponent()
 void UTDSInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
 	for (int8 i = 0; i < WeaponSlots.Num(); i++)
 	{
 		UTDSGameInstance* GI = Cast<UTDSGameInstance>(GetWorld()->GetGameInstance());
@@ -334,7 +333,6 @@ bool UTDSInventoryComponent::SwitchWeaponToIndex(int32 ChangeToIndex, int32 OldI
 								{
 									FWeaponInfo WeaponInfo;
 									UTDSGameInstance* GI = Cast<UTDSGameInstance>(GetWorld()->GetGameInstance());
-
 									GI->GetWeaponInfoByName(WeaponSlots[SecondIteration].NameItem, WeaponInfo);
 
 									bool bIsFind = false;
@@ -367,15 +365,11 @@ bool UTDSInventoryComponent::SwitchWeaponToIndex(int32 ChangeToIndex, int32 OldI
 			}
 		}
 	}
-
 	if (bIsSuccess)
 	{
 		SetAdditionalInfoWeapon(OldIndex, OldInfo);
 		OnSwitchWeapon.Broadcast(NewIdWeapon, NewAdditionalInfo, NewCurrentIndex);
-		//OnWeaponAmmoAvailable.Broadcast()
 	}
-
-
 	return bIsSuccess;
 }
 
@@ -396,12 +390,18 @@ FAdditionalWeaponInfo UTDSInventoryComponent::GetAdditionalInfoWeapon(int32 Inde
 			i++;
 		}
 		if (!bIsFind)
+		{
 			UE_LOG(LogTemp, Warning,
-		       TEXT("UTDSInventoryComponent::SetAdditionalInfoWeapon - No Found Weapon with index - %d"), IndexWeapon);
+			       TEXT("UTDSInventoryComponent::SetAdditionalInfoWeapon - No Found Weapon with index - %d"),
+			       IndexWeapon);
+		}
 	}
 	else
-		UE_LOG(LogTemp, Warning, TEXT("UTDSInventoryComponent::SetAdditionalInfoWeapon - Not Correct index Weapon - %d"),
-	       IndexWeapon);
+	{
+		UE_LOG(LogTemp, Warning,
+		       TEXT("UTDSInventoryComponent::SetAdditionalInfoWeapon - Not Correct index Weapon - %d"),
+		       IndexWeapon);
+	}
 
 	return Result;
 }
@@ -447,18 +447,23 @@ void UTDSInventoryComponent::SetAdditionalInfoWeapon(const int32 IndexWeapon, co
 			{
 				WeaponSlots[i].AdditionalInfo = NewInfo;
 				bIsFind = true;
-
 				OnWeaponAdditionalInfoChange.Broadcast(IndexWeapon, NewInfo);
 			}
 			i++;
 		}
 		if (!bIsFind)
+		{
 			UE_LOG(LogTemp, Warning,
-		       TEXT("UTDSInventoryComponent::SetAdditionalInfoWeapon - No Found Weapon with index - %d"), IndexWeapon);
+			       TEXT("UTDSInventoryComponent::SetAdditionalInfoWeapon - No Found Weapon with index - %d"),
+			       IndexWeapon);
+		}
 	}
 	else
-		UE_LOG(LogTemp, Warning, TEXT("UTDSInventoryComponent::SetAdditionalInfoWeapon - Not Correct index Weapon - %d"),
-	       IndexWeapon);
+	{
+		UE_LOG(LogTemp, Warning,
+		       TEXT("UTDSInventoryComponent::SetAdditionalInfoWeapon - Not Correct index Weapon - %d"),
+		       IndexWeapon);
+	}
 }
 
 void UTDSInventoryComponent::AmmoSlotChangeValue(const EWeaponType TypeWeapon, const int32 CoutChangeAmmo)
@@ -471,10 +476,10 @@ void UTDSInventoryComponent::AmmoSlotChangeValue(const EWeaponType TypeWeapon, c
 		{
 			AmmoSlots[i].Cout += CoutChangeAmmo;
 			if (AmmoSlots[i].Cout > AmmoSlots[i].MaxCout)
+			{
 				AmmoSlots[i].Cout = AmmoSlots[i].MaxCout;
-
+			}
 			OnAmmoChange.Broadcast(AmmoSlots[i].WeaponType, AmmoSlots[i].Cout);
-
 			bIsFind = true;
 		}
 		i++;
@@ -498,12 +503,9 @@ bool UTDSInventoryComponent::CheckAmmoForWeapon(const EWeaponType TypeWeapon, in
 				return true;
 			}
 		}
-
 		i++;
 	}
-
 	OnWeaponAmmoEmpty.Broadcast(TypeWeapon); //visual empty ammo slot
-
 	return false;
 }
 
@@ -599,62 +601,59 @@ TArray<FAmmoSlot> UTDSInventoryComponent::GetAmmoSlots()
 }
 
 void UTDSInventoryComponent::InitInventory(const TArray<FWeaponSlot>& NewWeaponSlotsInfo,
-	const TArray<FAmmoSlot>& NewAmmoSlotsInfo)
+                                           const TArray<FAmmoSlot>& NewAmmoSlotsInfo)
 {
 	WeaponSlots = NewWeaponSlotsInfo;
 	AmmoSlots = NewAmmoSlotsInfo;
 	//Find init weaponsSlots and First Init Weapon
-
 	MaxSlotsWeapon = WeaponSlots.Num();
-
 	if (WeaponSlots.IsValidIndex(0))
 	{
 		if (!WeaponSlots[0].NameItem.IsNone())
 		{
-			//OnSwitchWeapon.Broadcast(WeaponSlots[0].NameItem, WeaponSlots[0].AdditionalInfo, 0);
 			SwitchWeaponEvent(WeaponSlots[0].NameItem, WeaponSlots[0].AdditionalInfo, 0);
 		}
-			
-			
 	}
 }
 
-void UTDSInventoryComponent::AmmoChangeEvent(EWeaponType TypeWeapon, int32 Cout)
+void UTDSInventoryComponent::AmmoChangeEvent(const EWeaponType TypeWeapon, const int32 Cout) const
 {
 	OnAmmoChange.Broadcast(TypeWeapon, Cout);
 }
 
-void UTDSInventoryComponent::SwitchWeaponEvent(FName WeaponName, FAdditionalWeaponInfo AdditionalInfo, int32 IndexSlot)
+void UTDSInventoryComponent::SwitchWeaponEvent(const FName WeaponName, const FAdditionalWeaponInfo AdditionalInfo,
+                                               const int32 IndexSlot) const
 {
-	OnSwitchWeapon.Broadcast(WeaponName,AdditionalInfo,IndexSlot);
+	OnSwitchWeapon.Broadcast(WeaponName, AdditionalInfo, IndexSlot);
 }
 
-void UTDSInventoryComponent::WeaponAdditionalInfoChangeEvent(int32 IndexSlot, FAdditionalWeaponInfo AdditionalInfo)
+void UTDSInventoryComponent::WeaponAdditionalInfoChangeEvent(const int32 IndexSlot,
+                                                             const FAdditionalWeaponInfo AdditionalInfo) const
 {
-	OnWeaponAdditionalInfoChange.Broadcast(IndexSlot,AdditionalInfo);
+	OnWeaponAdditionalInfoChange.Broadcast(IndexSlot, AdditionalInfo);
 }
 
-void UTDSInventoryComponent::WeaponAmmoEmptyEvent(EWeaponType TypeWeapon)
+void UTDSInventoryComponent::WeaponAmmoEmptyEvent(const EWeaponType TypeWeapon) const
 {
 	OnWeaponAmmoEmpty.Broadcast(TypeWeapon);
 }
 
-void UTDSInventoryComponent::WeaponAmmoAviableEvent(EWeaponType TypeWeapon)
+void UTDSInventoryComponent::WeaponAmmoAviableEvent(const EWeaponType TypeWeapon) const
 {
 	OnWeaponAmmoAvailable.Broadcast(TypeWeapon);
 }
 
-void UTDSInventoryComponent::UpdateWeaponSlotsEvent(int32 IndexSlotChange, FWeaponSlot NewInfo)
+void UTDSInventoryComponent::UpdateWeaponSlotsEvent(const int32 IndexSlotChange, const FWeaponSlot NewInfo) const
 {
-	OnUpdateWeaponSlots.Broadcast(IndexSlotChange,NewInfo);
+	OnUpdateWeaponSlots.Broadcast(IndexSlotChange, NewInfo);
 }
 
-void UTDSInventoryComponent::WeaponNotHaveRoundEvent(int32 IndexSlotWeapon)
+void UTDSInventoryComponent::WeaponNotHaveRoundEvent(const int32 IndexSlotWeapon) const
 {
 	OnWeaponNotHaveRound.Broadcast(IndexSlotWeapon);
 }
 
-void UTDSInventoryComponent::WeaponHaveRoundEvent(int32 IndexSlotWeapon)
+void UTDSInventoryComponent::WeaponHaveRoundEvent(const int32 IndexSlotWeapon) const
 {
 	OnWeaponHaveRound.Broadcast(IndexSlotWeapon);
 }

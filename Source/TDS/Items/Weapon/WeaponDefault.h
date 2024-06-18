@@ -22,8 +22,8 @@ public:
 	AWeaponDefault();
 
 	FOnWeaponFireStart OnWeaponFireStart;
-	FOnWeaponReloadEnd OnWeaponReloadEnd;
 	FOnWeaponReloadStart OnWeaponReloadStart;
+	FOnWeaponReloadEnd OnWeaponReloadEnd;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Components)
 	class USceneComponent* SceneComponent = nullptr;
@@ -55,6 +55,8 @@ public:
 
 	void WeaponInit();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLogic")
+	FName IdWeaponName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLogic")
 	bool WeaponFiring = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic")
@@ -131,6 +133,9 @@ public:
 	void SetDebugState(bool IsDebugMode);
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Debug")
 	float SizeVectorToChangeShootDirectionLogic = 100.0f;
+
+	UFUNCTION()
+	void FXWeaponFire(UParticleSystem* EffectFireWeapon, USoundBase* SoundFireWeapon) const;
 
 	UFUNCTION()
 	static void SpawnTraceHitDecal(UMaterialInterface* DecalMaterial, const FHitResult& HitResult);

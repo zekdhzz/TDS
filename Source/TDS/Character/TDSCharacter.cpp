@@ -64,7 +64,7 @@ void ATDSCharacter::BeginPlay()
 	FWeaponInfo NewWeapon;
 	constexpr FAdditionalWeaponInfo NewAdditionalInfo;
 	Cast<UTDSGameInstance>(GetGameInstance())->GetWeaponInfoByName(InitWeaponName, NewWeapon);
-	InitWeapon(InitWeaponName,NewAdditionalInfo ,0);
+	InitWeapon(InitWeaponName, NewAdditionalInfo, 0);
 
 	if (CursorMaterial)
 	{
@@ -82,8 +82,8 @@ void ATDSCharacter::Tick(const float DeltaSeconds)
 		{
 			FHitResult TraceHitResult;
 			PC->GetHitResultUnderCursor(ECC_Visibility, true, TraceHitResult);
-			const FVector CursorFV = TraceHitResult.ImpactNormal;
-			const FRotator CursorR = CursorFV.Rotation();
+			const FVector CursorF = TraceHitResult.ImpactNormal;
+			const FRotator CursorR = CursorF.Rotation();
 			CurrentCursor->SetWorldLocation(TraceHitResult.Location);
 			CurrentCursor->SetWorldRotation(CursorR);
 		}
@@ -383,7 +383,7 @@ void ATDSCharacter::SetInitWeaponName(FString WeaponName)
 	FWeaponInfo NewWeapon;
 	constexpr FAdditionalWeaponInfo NewAdditionalInfo;
 	Cast<UTDSGameInstance>(GetGameInstance())->GetWeaponInfoByName(InitWeaponName, NewWeapon);
-	InitWeapon(InitWeaponName,NewAdditionalInfo ,0);
+	InitWeapon(InitWeaponName, NewAdditionalInfo, 0);
 	UE_LOG(LogTemp, Log, TEXT("Seted weapon is %s"), *CurrentWeapon->WeaponSetting.WeaponClass->GetFName().ToString())
 }
 
@@ -436,8 +436,9 @@ void ATDSCharacter::InitWeapon(const FName IdWeaponName, const FAdditionalWeapon
 					const FAttachmentTransformRules Rule(EAttachmentRule::SnapToTarget, false);
 					Weapon->AttachToComponent(GetMesh(), Rule, FName("WeaponSocketRightHand"));
 					CurrentWeapon = Weapon;
+					Weapon->IdWeaponName = IdWeaponName;
 					Weapon->WeaponSetting = WeaponInfo;
-					Weapon->WeaponInfo.Round = WeaponInfo.MaxRound;
+					//Weapon->WeaponInfo.Round = WeaponInfo.MaxRound;
 					Weapon->ReloadTime = WeaponInfo.ReloadTime;
 					Weapon->UpdateStateWeapon(MovementState);
 					Weapon->AdditionalWeaponInfo = WeaponAdditionalInfo;
@@ -453,7 +454,6 @@ void ATDSCharacter::InitWeapon(const FName IdWeaponName, const FAdditionalWeapon
 					{
 						CurrentWeapon->InitReload();
 					}
-
 					if (InventoryComponent)
 					{
 						InventoryComponent->OnWeaponAmmoAvailable.Broadcast(Weapon->WeaponSetting.WeaponType);
@@ -485,8 +485,11 @@ void ATDSCharacter::TryReloadWeapon()
 {
 	if (CurrentWeapon)
 	{
-		if (CurrentWeapon->GetWeaponRound() <= CurrentWeapon->WeaponSetting.MaxRound)
+		if (CurrentWeapon->GetWeaponRound() < CurrentWeapon->WeaponSetting.MaxRound && CurrentWeapon->
+			CheckCanWeaponReload())
+		{
 			CurrentWeapon->InitReload();
+		}
 	}
 }
 

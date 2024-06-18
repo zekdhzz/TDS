@@ -98,19 +98,19 @@ public:
 	
 
 	UFUNCTION()
-	void AmmoChangeEvent(EWeaponType TypeWeapon, int32 Cout);
+	void AmmoChangeEvent(EWeaponType TypeWeapon, int32 Cout) const;
 	UFUNCTION()
-	void SwitchWeaponEvent(FName WeaponName, FAdditionalWeaponInfo AdditionalInfo, int32 IndexSlot);
+	void SwitchWeaponEvent(FName WeaponName, FAdditionalWeaponInfo AdditionalInfo, int32 IndexSlot) const;
 	UFUNCTION()
-	void WeaponAdditionalInfoChangeEvent(int32 IndexSlot, FAdditionalWeaponInfo AdditionalInfo);
+	void WeaponAdditionalInfoChangeEvent(int32 IndexSlot, FAdditionalWeaponInfo AdditionalInfo) const;
 	UFUNCTION()
-	void WeaponAmmoEmptyEvent(EWeaponType TypeWeapon);
+	void WeaponAmmoEmptyEvent(EWeaponType TypeWeapon) const;
 	UFUNCTION()
-	void WeaponAmmoAviableEvent(EWeaponType TypeWeapon);
+	void WeaponAmmoAviableEvent(EWeaponType TypeWeapon) const;
 	UFUNCTION()
-	void UpdateWeaponSlotsEvent(int32 IndexSlotChange, FWeaponSlot NewInfo);
+	void UpdateWeaponSlotsEvent(int32 IndexSlotChange, FWeaponSlot NewInfo) const;
 	UFUNCTION()
-	void WeaponNotHaveRoundEvent(int32 IndexSlotWeapon);
+	void WeaponNotHaveRoundEvent(int32 IndexSlotWeapon) const;
 	UFUNCTION()
-	void WeaponHaveRoundEvent(int32 IndexSlotWeapon);
+	void WeaponHaveRoundEvent(int32 IndexSlotWeapon) const;
 };

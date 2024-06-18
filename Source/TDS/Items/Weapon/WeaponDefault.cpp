@@ -52,31 +52,18 @@ void AWeaponDefault::Tick(const float DeltaTime)
 
 void AWeaponDefault::FireTick(const float DeltaTime)
 {
-	if (GetWeaponRound() > 0)
+	if (WeaponFiring && GetWeaponRound() > 0 && !WeaponReloading)
 	{
-		if (WeaponFiring)
+		if (FireTimer < 0.f)
 		{
-			if (FireTimer < 0.f)
-			{
-				if (!WeaponReloading)
-				{
-					Fire();
-				}
-			}
-			else
-			{
-				FireTimer -= DeltaTime;
-			}
+			Fire();
+			UE_LOG(LogTemp, Warning, TEXT("Rounds in clip %i"), GetWeaponRound());
 		}
-	}
-	else
-	{
-		if (!WeaponReloading)
-		{
-			InitReload();
-		}
+		else
+			FireTimer -= DeltaTime;
 	}
 }
+
 
 void AWeaponDefault::ReloadTick(const float DeltaTime)
 {
@@ -194,19 +181,12 @@ void AWeaponDefault::Fire()
 		}
 	}
 
-	//UE_LOG(LogTemp, Warning, TEXT("AWeaponDefault Fire"));
 	FireTimer = WeaponSetting.RateOfFire;
-	WeaponInfo.Round = WeaponInfo.Round - 1;
-	UE_LOG(LogTemp, Warning, TEXT("Rounds in clip %i"), WeaponInfo.Round);
-
-	OnWeaponFireStart.Broadcast(AnimToPlay);
-
+	AdditionalWeaponInfo.Round = AdditionalWeaponInfo.Round - 1;
 	ChangeDispersionByShot();
 
-	UGameplayStatics::SpawnSoundAtLocation(GetWorld(), WeaponSetting.SoundFireWeapon,
-	                                       ShootLocation->GetComponentLocation());
-	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), WeaponSetting.EffectFireWeapon,
-	                                         ShootLocation->GetComponentTransform());
+	OnWeaponFireStart.Broadcast(AnimToPlay);
+	FXWeaponFire(WeaponSetting.EffectFireWeapon, WeaponSetting.SoundFireWeapon);
 
 	const int8 NumberProjectile = GetNumberProjectileByShot();
 
@@ -217,9 +197,11 @@ void AWeaponDefault::Fire()
 		FProjectileInfo ProjectileInfo;
 		ProjectileInfo = GetProjectile();
 		FVector EndTraceLocation;
-		for (int8 i = 0; i < NumberProjectile; i++) //Shotgun
+		//Circle For Shotgun shot
+		for (int8 i = 0; i < NumberProjectile; i++)
 		{
 			EndTraceLocation = GetFireEndLocation();
+			//Freeze height
 			//FVector Dir = EndTraceLocation - SpawnLocation;
 			//Dir.Normalize();
 			//FRotator SpawnTraceRotation = FMatrix(Dir, FVector(0, 1, 0), FVector(0, 0, 1), FVector::ZeroVector).Rotator();
@@ -238,7 +220,7 @@ void AWeaponDefault::Fire()
 					UGameplayStatics::FinishSpawningActor(
 						Projectile, FTransform(SpawnRotation, SpawnLocation, FVector(1.0f, 1.0f, 1.0f)));
 				}
-				UE_LOG(LogTemp, Warning, TEXT("Projectile"));
+				UE_LOG(LogTemp, Warning, TEXT("Spawn Projectile"));
 			}
 			else
 			{
@@ -263,11 +245,9 @@ void AWeaponDefault::Fire()
 				if (Hit.GetActor() && Hit.PhysMaterial.IsValid())
 				{
 					EPhysicalSurface Surface = UGameplayStatics::GetSurfaceType(Hit);
-
 					if (WeaponSetting.ProjectileSetting.HitDecals.Contains(Surface))
 					{
 						UMaterialInterface* Material = WeaponSetting.ProjectileSetting.HitDecals[Surface];
-
 						if (Material && Hit.GetComponent())
 						{
 							SpawnTraceHitDecal(Material, Hit);
@@ -290,6 +270,13 @@ void AWeaponDefault::Fire()
 				}
 				UE_LOG(LogTemp, Warning, TEXT("Hitscan"));
 			}
+		}
+	}
+	if (GetWeaponRound() <= 0 && !WeaponReloading)
+	{
+		if (CheckCanWeaponReload())
+		{
+			InitReload();
 		}
 	}
 }
@@ -400,11 +387,12 @@ int8 AWeaponDefault::GetNumberProjectileByShot() const
 
 int32 AWeaponDefault::GetWeaponRound() const
 {
-	return WeaponInfo.Round;
+	return AdditionalWeaponInfo.Round;
 }
 
 int8 AWeaponDefault::GetAvailableAmmoForReload() const
 {
+	UE_LOG(LogTemp, Warning, TEXT("GetAvailableAmmoForReload"));
 	int8 AmmoForWeapon = WeaponSetting.MaxRound;
 	if (GetOwner())
 	{
@@ -412,10 +400,8 @@ int8 AWeaponDefault::GetAvailableAmmoForReload() const
 			GetOwner()->GetComponentByClass(UTDSInventoryComponent::StaticClass()));
 		if (MyInv)
 		{
-			if (MyInv->CheckAmmoForWeapon(WeaponSetting.WeaponType, AmmoForWeapon))
-			{
-				AmmoForWeapon = AmmoForWeapon; ///?????
-			}
+			MyInv->CheckAmmoForWeapon(WeaponSetting.WeaponType, AmmoForWeapon);
+			///AmmoForWeapon = AmmoForWeapon; ///?????
 		}
 	}
 	return AmmoForWeapon;
@@ -423,25 +409,32 @@ int8 AWeaponDefault::GetAvailableAmmoForReload() const
 
 void AWeaponDefault::InitReload()
 {
+	UE_LOG(LogTemp, Warning, TEXT("InitReload"));
 	WeaponReloading = true;
 	ReloadTimer = WeaponSetting.ReloadTime;
 
 	UAnimMontage* AnimCharReload;
 	if (WeaponAiming)
+	{
 		AnimCharReload = WeaponSetting.AnimWeaponInfo.AnimCharReloadAim;
+	}
 	else
+	{
 		AnimCharReload = WeaponSetting.AnimWeaponInfo.AnimCharReload;
+	}
 	OnWeaponReloadStart.Broadcast(AnimCharReload);
 
 	UAnimMontage* AnimWeaponReload;
 	if (WeaponAiming)
+	{
 		AnimWeaponReload = WeaponSetting.AnimWeaponInfo.AnimWeaponReloadAim;
+	}
 	else
+	{
 		AnimWeaponReload = WeaponSetting.AnimWeaponInfo.AnimWeaponReload;
+	}
 
-	if (WeaponSetting.AnimWeaponInfo.AnimWeaponReload
-		&& SkeletalMeshWeapon
-		&& SkeletalMeshWeapon->GetAnimInstance())
+	if (WeaponSetting.AnimWeaponInfo.AnimWeaponReload && SkeletalMeshWeapon && SkeletalMeshWeapon->GetAnimInstance())
 	{
 		AnimWeaponStart(AnimWeaponReload);
 	}
@@ -455,6 +448,7 @@ void AWeaponDefault::InitReload()
 
 void AWeaponDefault::FinishReload()
 {
+	UE_LOG(LogTemp, Warning, TEXT("FinishReload"));
 	WeaponReloading = false;
 
 	const int8 AvailableAmmoFromInventory = GetAvailableAmmoForReload();
@@ -470,6 +464,7 @@ void AWeaponDefault::FinishReload()
 		AdditionalWeaponInfo.Round += NeedToReload;
 		AmmoNeedTakeFromInv = NeedToReload;
 	}
+
 	OnWeaponReloadEnd.Broadcast(true, -AmmoNeedTakeFromInv);
 }
 
@@ -489,18 +484,22 @@ bool AWeaponDefault::CheckCanWeaponReload() const
 	bool bResult = true;
 	if (GetOwner())
 	{
-		UTDSInventoryComponent* MyInv = Cast<UTDSInventoryComponent>(
+		UTDSInventoryComponent* Inventory = Cast<UTDSInventoryComponent>(
 			GetOwner()->GetComponentByClass(UTDSInventoryComponent::StaticClass()));
-		if (MyInv)
+		if (Inventory)
 		{
 			int8 AvailableAmmoForWeapon;
-			if (!MyInv->CheckAmmoForWeapon(WeaponSetting.WeaponType, AvailableAmmoForWeapon))
+			if (!Inventory->CheckAmmoForWeapon(WeaponSetting.WeaponType, AvailableAmmoForWeapon))
 			{
 				bResult = false;
+				Inventory->OnWeaponNotHaveRound.Broadcast(Inventory->GetWeaponIndexSlotByName(IdWeaponName));
+			}
+			else
+			{
+				Inventory->OnWeaponHaveRound.Broadcast(Inventory->GetWeaponIndexSlotByName(IdWeaponName));
 			}
 		}
 	}
-
 	return bResult;
 }
 
@@ -633,6 +632,18 @@ bool AWeaponDefault::GetDebugState() const
 void AWeaponDefault::SetDebugState(const bool IsDebugMode)
 {
 	ShowDebug = IsDebugMode;
+}
+
+void AWeaponDefault::FXWeaponFire(UParticleSystem* EffectFireWeapon, USoundBase* SoundFireWeapon) const
+{
+	if (SoundFireWeapon)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), SoundFireWeapon, ShootLocation->GetComponentLocation());
+	}
+	if (EffectFireWeapon)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EffectFireWeapon, ShootLocation->GetComponentTransform());
+	}
 }
 
 void AWeaponDefault::SpawnTraceHitDecal(UMaterialInterface* DecalMaterial, const FHitResult& HitResult)
