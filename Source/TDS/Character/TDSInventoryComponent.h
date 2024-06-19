@@ -71,7 +71,7 @@ public:
 	int32 GetWeaponIndexSlotByName(FName IdWeaponName);
 	FName GetWeaponNameBySlotIndex(int32 IndexSlot);
 	bool GetWeaponTypeByIndexSlot(int32 IndexSlot, EWeaponType &WeaponType);
-	bool GetWeaponTypeByNameWeapon(FName IdWeaponName, EWeaponType &WeaponType);
+	bool GetWeaponTypeByNameWeapon(FName IdWeaponName, EWeaponType &WeaponType) const;
 	
 	UFUNCTION(BlueprintCallable)
 	void AmmoSlotChangeValue(EWeaponType TypeWeapon, int32 CoutChangeAmmo);
@@ -86,7 +86,7 @@ public:
 	bool SwitchWeaponToInventory(FWeaponSlot NewWeapon, int32 IndexSlot, int32 CurrentIndexWeaponChar,
 	                             FDropItem& DropItemInfo);
 	UFUNCTION(BlueprintCallable, Category = "Interface")
-	bool TryGetWeaponToInventory(FWeaponSlot NewWeapon);
+	void TryGetWeaponToInventory(FWeaponSlot NewWeapon);
 	UFUNCTION(BlueprintCallable, Category = "Interface")
 	void DropWeaponByIndex(int32 ByIndex);
 	UFUNCTION(BlueprintCallable, Category = "Interface")

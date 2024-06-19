@@ -56,7 +56,7 @@ void AWeaponDefault::FireTick(const float DeltaTime)
 		if (FireTimer < 0.f)
 		{
 			Fire();
-			UE_LOG(LogTemp, Warning, TEXT("Rounds in clip %i"), GetWeaponRound());
+			//UE_LOG(LogTemp, Warning, TEXT("Rounds in clip %i"), GetWeaponRound());
 		}
 		else
 			FireTimer -= DeltaTime;
@@ -219,7 +219,7 @@ void AWeaponDefault::Fire()
 					UGameplayStatics::FinishSpawningActor(
 						Projectile, FTransform(SpawnRotation, SpawnLocation, FVector(1.0f, 1.0f, 1.0f)));
 				}
-				UE_LOG(LogTemp, Warning, TEXT("Spawn Projectile"));
+				//UE_LOG(LogTemp, Warning, TEXT("Spawn Projectile"));
 			}
 			else
 			{
@@ -389,18 +389,17 @@ int32 AWeaponDefault::GetWeaponRound() const
 	return AdditionalWeaponInfo.Round;
 }
 
-int8 AWeaponDefault::GetAvailableAmmoForReload() const
+int8 AWeaponDefault::GetAvailableAmmoForReload()
 {
-	UE_LOG(LogTemp, Warning, TEXT("GetAvailableAmmoForReload"));
 	int8 AmmoForWeapon = WeaponSetting.MaxRound;
 	if (GetOwner())
 	{
 		UTDSInventoryComponent* MyInv = Cast<UTDSInventoryComponent>(
-			GetOwner()->GetComponentByClass(UTDSInventoryComponent::StaticClass()));
+			GetNetOwningPlayer()->GetPlayerController(GetWorld())->GetPawn()->GetComponentByClass(
+				UTDSInventoryComponent::StaticClass()));
 		if (MyInv)
 		{
 			MyInv->CheckAmmoForWeapon(WeaponSetting.WeaponType, AmmoForWeapon);
-			///AmmoForWeapon = AmmoForWeapon; ///?????
 		}
 	}
 	return AmmoForWeapon;
@@ -450,12 +449,13 @@ void AWeaponDefault::FinishReload()
 	UE_LOG(LogTemp, Warning, TEXT("FinishReload"));
 	WeaponReloading = false;
 
-	const int8 AvailableAmmoFromInventory = GetAvailableAmmoForReload();
+	int8 AvailableAmmoFromInventory = GetAvailableAmmoForReload();
 	int8 AmmoNeedTakeFromInv;
-	const int8 NeedToReload = WeaponSetting.MaxRound - AdditionalWeaponInfo.Round;
+	int8 NeedToReload = WeaponSetting.MaxRound - AdditionalWeaponInfo.Round;
+
 	if (NeedToReload > AvailableAmmoFromInventory)
 	{
-		AdditionalWeaponInfo.Round = AvailableAmmoFromInventory;
+		AdditionalWeaponInfo.Round += AvailableAmmoFromInventory;
 		AmmoNeedTakeFromInv = AvailableAmmoFromInventory;
 	}
 	else

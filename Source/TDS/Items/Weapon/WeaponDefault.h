@@ -99,7 +99,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetWeaponRound() const;
-	int8 GetAvailableAmmoForReload() const;
+	int8 GetAvailableAmmoForReload();
 	
 	void InitReload();
 	void FinishReload();
