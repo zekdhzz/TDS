@@ -10,7 +10,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponFireStart, UAnimMontage*, A
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponReloadStart, UAnimMontage*, Anim);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponReloadEnd);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponReloadEnd, bool, bIsSuccess, int32, AmmoSafe);
 
 UCLASS()
 class TDS_API AWeaponDefault : public AActor
@@ -22,8 +22,8 @@ public:
 	AWeaponDefault();
 
 	FOnWeaponFireStart OnWeaponFireStart;
-	FOnWeaponReloadEnd OnWeaponReloadEnd;
 	FOnWeaponReloadStart OnWeaponReloadStart;
+	FOnWeaponReloadEnd OnWeaponReloadEnd;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = Components)
 	class USceneComponent* SceneComponent = nullptr;
@@ -38,6 +38,8 @@ public:
 	FWeaponInfo WeaponSetting;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
 	FAdditionalWeaponInfo WeaponInfo;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Info")
+	FAdditionalWeaponInfo AdditionalWeaponInfo;
 
 protected:
 	// Called when the game starts or when spawned
@@ -53,6 +55,8 @@ public:
 
 	void WeaponInit();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLogic")
+	FName IdWeaponName;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FireLogic")
 	bool WeaponFiring = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ReloadLogic")
@@ -95,8 +99,14 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetWeaponRound() const;
+	int8 GetAvailableAmmoForReload();
+	
 	void InitReload();
 	void FinishReload();
+	void CancelReload();
+	bool CheckCanWeaponReload() const;
+
+	
 	UFUNCTION()
 	void AnimWeaponStart(UAnimMontage* WeaponAnim) const;
 
@@ -125,11 +135,15 @@ public:
 	float SizeVectorToChangeShootDirectionLogic = 100.0f;
 
 	UFUNCTION()
+	void FXWeaponFire(UParticleSystem* EffectFireWeapon, USoundBase* SoundFireWeapon) const;
+
+	UFUNCTION()
 	static void SpawnTraceHitDecal(UMaterialInterface* DecalMaterial, const FHitResult& HitResult);
 	UFUNCTION()
 	void SpawnTraceHitFX(UParticleSystem* FxTemplate, const FHitResult& HitResult) const;
 	UFUNCTION()
 	void SpawnTraceHitSound(USoundBase* HitSound, const FHitResult& HitResult) const;
 
+	
 	void DebugShowStatus() const;
 };
